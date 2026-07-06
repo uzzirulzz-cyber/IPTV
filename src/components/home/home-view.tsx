@@ -55,7 +55,7 @@ function ChannelTile({ ch, onClick }: { ch: FeaturedChannel; onClick: () => void
   return (
     <button
       onClick={onClick}
-      className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-rose-500/40 transition-all"
+      className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-blue-500/40 transition-all"
     >
       <div className="absolute inset-0 flex items-center justify-center p-3">
         <ChannelLogo
@@ -141,17 +141,17 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
         />
         {/* Dark gradient overlay for readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/40" aria-hidden="true" />
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-rose-500/20 blur-3xl" aria-hidden="true" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" aria-hidden="true" />
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" aria-hidden="true" />
         <div className="relative z-10 max-w-3xl">
           {/* Large branded Playbeat logo */}
           <div className="mb-6">
             <PlaybeatLogoLarge />
           </div>
-          <Badge variant="outline" className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+          <Badge variant="outline" className="mb-4 gap-1.5 border-blue-500/30 bg-blue-500/10 text-blue-400">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />
             </span>
             Broadcasting active
           </Badge>
@@ -180,7 +180,7 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight">
             Stream the world, <br />
-            <span className="bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 to-blue-400 bg-clip-text text-transparent">
               one beat at a time.
             </span>
           </h1>
@@ -200,7 +200,7 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
           {/* Quick stats */}
           <div className="mt-8 flex flex-wrap gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
                 <Tv className="h-4 w-4" />
               </div>
               <div>
@@ -213,7 +213,7 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
                 <Zap className="h-4 w-4" />
               </div>
               <div>
@@ -226,7 +226,7 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
                 <RefreshCw className="h-4 w-4" />
               </div>
               <div>
@@ -242,7 +242,7 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
       <section className="mt-10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Flame className="h-5 w-5 text-rose-400" />
+            <Flame className="h-5 w-5 text-blue-400" />
             <h2 className="text-xl md:text-2xl font-semibold">Featured Channels</h2>
           </div>
           <Button variant="ghost" size="sm" onClick={() => go('/channels')} className="gap-2">
@@ -293,7 +293,7 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
         <section className="mt-10">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-rose-400" />
+              <Clock className="h-5 w-5 text-blue-400" />
               <h2 className="text-xl md:text-2xl font-semibold">Continue Watching</h2>
             </div>
             {history.length > 0 && (
@@ -333,7 +333,7 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
                     })
                     go(`/player?${params.toString()}`)
                   }}
-                  className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-rose-500/40 transition-all"
+                  className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-blue-500/40 transition-all"
                 >
                   <div className="absolute inset-0 flex items-center justify-center">
                     {item.channelLogo ? (
@@ -366,10 +366,10 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
 
       {/* Feature cards */}
       <section className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-border/40 hover:border-rose-500/30 transition-colors">
+        <Card className="border-border/40 hover:border-blue-500/30 transition-colors">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
                 <Tv className="h-5 w-5" />
               </div>
               <h3 className="font-semibold">Live Channels</h3>
@@ -377,15 +377,15 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
             <p className="text-sm text-muted-foreground">
               Browse thousands of live channels organized by category. Search by name, tap to play, and switch instantly without distortion.
             </p>
-            <Button variant="link" className="px-0 mt-3 text-rose-400" onClick={() => go('/channels')}>
+            <Button variant="link" className="px-0 mt-3 text-blue-400" onClick={() => go('/channels')}>
               Browse now <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           </CardContent>
         </Card>
-        <Card className="border-border/40 hover:border-rose-500/30 transition-colors">
+        <Card className="border-border/40 hover:border-blue-500/30 transition-colors">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
                 <Heart className="h-5 w-5" />
               </div>
               <h3 className="font-semibold">Favorites</h3>
@@ -393,15 +393,15 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
             <p className="text-sm text-muted-foreground">
               Save your favorite channels with a single tap and access them quickly from anywhere. Synced across sessions when signed in.
             </p>
-            <Button variant="link" className="px-0 mt-3 text-rose-400" onClick={() => go('/favorites')}>
+            <Button variant="link" className="px-0 mt-3 text-blue-400" onClick={() => go('/favorites')}>
               View favorites <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           </CardContent>
         </Card>
-        <Card className="border-border/40 hover:border-rose-500/30 transition-colors">
+        <Card className="border-border/40 hover:border-blue-500/30 transition-colors">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
                 <Radio className="h-5 w-5" />
               </div>
               <h3 className="font-semibold">Premium Streaming</h3>

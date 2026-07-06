@@ -113,7 +113,7 @@ export function FavoritesView() {
           {favorites.map((fav) => (
             <div
               key={fav.id}
-              className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-rose-500/40 transition-all cursor-pointer"
+              className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-blue-500/40 transition-all cursor-pointer"
               onClick={() => {
                 const params = new URLSearchParams({
                   id: fav.channelId,
@@ -142,14 +142,14 @@ export function FavoritesView() {
                   e.stopPropagation()
                   removeFavorite(fav.channelId)
                 }}
-                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-rose-500 text-white flex items-center justify-center"
+                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-blue-500 text-white flex items-center justify-center"
                 aria-label="Remove from favorites"
               >
                 <Heart className="h-3.5 w-3.5 fill-white" />
               </button>
               {/* Play overlay */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500 shadow-lg">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 shadow-lg">
                   <Play className="h-5 w-5 text-white fill-white ml-0.5" />
                 </div>
               </div>

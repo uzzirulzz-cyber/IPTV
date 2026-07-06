@@ -404,7 +404,7 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
         {(loading || buffering) && !error && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-10 w-10 animate-spin text-rose-400" />
+              <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
               <p className="text-sm text-white/80">{loading ? 'Loading stream…' : 'Buffering…'}</p>
             </div>
           </div>
@@ -414,7 +414,7 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
         {error && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-6">
             <div className="max-w-md text-center">
-              <AlertCircle className="h-12 w-12 text-rose-400 mx-auto mb-3" />
+              <AlertCircle className="h-12 w-12 text-blue-400 mx-auto mb-3" />
               <p className="text-white font-medium mb-1">Playback Error</p>
               <p className="text-sm text-white/60 mb-4">{error}</p>
               <Button onClick={retry} variant="outline" className="gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20">
@@ -428,7 +428,7 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
         {/* LIVE badge */}
         {!error && !loading && (
           <div className="absolute top-4 left-4">
-            <Badge className="bg-rose-500 text-white gap-1.5">
+            <Badge className="bg-blue-500 text-white gap-1.5">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
@@ -444,7 +444,7 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
             <div className="text-xs font-semibold uppercase tracking-wider px-2 py-1 mb-1">Quality</div>
             <button
               onClick={() => { setQuality('auto'); setShowSettings(false) }}
-              className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-white/10 ${quality === 'auto' ? 'text-rose-400' : ''}`}
+              className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-white/10 ${quality === 'auto' ? 'text-blue-400' : ''}`}
             >
               Auto
             </button>
@@ -452,7 +452,7 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
               <button
                 key={lvl.index}
                 onClick={() => { setQuality(lvl.height); setShowSettings(false) }}
-                className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-white/10 ${quality === lvl.height ? 'text-rose-400' : ''}`}
+                className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-white/10 ${quality === lvl.height ? 'text-blue-400' : ''}`}
               >
                 {lvl.height}p
               </button>
@@ -466,7 +466,7 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
             <div className="flex items-center gap-3">
               <button
                 onClick={togglePlay}
-                className="text-white hover:text-rose-400 transition-colors"
+                className="text-white hover:text-blue-400 transition-colors"
                 aria-label={playing ? 'Pause' : 'Play'}
               >
                 {playing ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
@@ -475,7 +475,7 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
               <div className="flex items-center gap-2 flex-1 max-w-[200px]">
                 <button
                   onClick={toggleMute}
-                  className="text-white hover:text-rose-400 transition-colors"
+                  className="text-white hover:text-blue-400 transition-colors"
                   aria-label={muted ? 'Unmute' : 'Mute'}
                 >
                   {muted || volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
@@ -497,7 +497,7 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
               {availableLevels.length > 0 && (
                 <button
                   onClick={() => setShowSettings((s) => !s)}
-                  className="text-white hover:text-rose-400 transition-colors"
+                  className="text-white hover:text-blue-400 transition-colors"
                   aria-label="Settings"
                 >
                   <Settings className="h-5 w-5" />
@@ -506,7 +506,7 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
 
               <button
                 onClick={toggleFullscreen}
-                className="text-white hover:text-rose-400 transition-colors"
+                className="text-white hover:text-blue-400 transition-colors"
                 aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
               >
                 {fullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}

@@ -195,11 +195,11 @@ export function ChannelBrowser() {
       </div>
 
       {error && (
-        <Card className="border-rose-500/30 bg-rose-500/5 mb-6">
+        <Card className="border-blue-500/30 bg-blue-500/5 mb-6">
           <CardContent className="flex items-start gap-3 p-4">
-            <AlertCircle className="h-5 w-5 text-rose-400 mt-0.5 shrink-0" />
+            <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-rose-400">Unable to load channels</p>
+              <p className="text-sm font-medium text-blue-400">Unable to load channels</p>
               <p className="text-xs text-muted-foreground mt-1">
                 The IPTV server may be offline, blocking this server&rsquo;s IP, or the credentials may be invalid.
               </p>
@@ -303,7 +303,7 @@ export function ChannelBrowser() {
                   return (
                     <div
                       key={id}
-                      className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-rose-500/40 transition-all cursor-pointer"
+                      className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-blue-500/40 transition-all cursor-pointer"
                       onClick={() => openChannel({
                         channelId: id,
                         channelName: channel.name,
@@ -330,7 +330,7 @@ export function ChannelBrowser() {
                         }}
                         className={`absolute top-2 right-2 h-7 w-7 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${
                           isFav
-                            ? 'bg-rose-500 text-white opacity-100'
+                            ? 'bg-blue-500 text-white opacity-100'
                             : 'bg-black/40 text-white opacity-0 group-hover:opacity-100'
                         }`}
                         aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
@@ -338,7 +338,7 @@ export function ChannelBrowser() {
                         <Heart className={`h-3.5 w-3.5 ${isFav ? 'fill-white' : ''}`} />
                       </button>
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500 shadow-lg">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 shadow-lg">
                           <Play className="h-5 w-5 text-white fill-white ml-0.5" />
                         </div>
                       </div>

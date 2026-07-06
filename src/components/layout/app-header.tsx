@@ -88,10 +88,10 @@ export function AppHeader() {
           >
             <PlaybeatLogo showTagline />
           </button>
-          <Badge variant="outline" className="hidden md:flex gap-1.5 border-rose-500/30 bg-rose-500/10 text-rose-400">
+          <Badge variant="outline" className="hidden md:flex gap-1.5 border-blue-500/30 bg-blue-500/10 text-blue-400">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />
             </span>
             LIVE
           </Badge>

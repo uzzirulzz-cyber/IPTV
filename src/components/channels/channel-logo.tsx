@@ -20,10 +20,10 @@ interface ChannelLogoProps {
  * same channel always gets the same color.
  */
 const COLORS = [
-  'bg-rose-500/20 text-rose-400',
-  'bg-orange-500/20 text-orange-400',
+  'bg-blue-500/20 text-blue-400',
+  'bg-blue-600/20 text-blue-400',
   'bg-amber-500/20 text-amber-400',
-  'bg-emerald-500/20 text-emerald-400',
+  'bg-blue-500/20 text-blue-400',
   'bg-cyan-500/20 text-cyan-400',
   'bg-violet-500/20 text-violet-400',
   'bg-pink-500/20 text-pink-400',

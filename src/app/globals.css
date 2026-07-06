@@ -43,61 +43,61 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Dark premium theme — Playbeat Digital uses an always-dark UI */
+/* Playbeat Digital — Pure black + blue accent theme */
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.13 0.005 280);
-  --foreground: oklch(0.97 0.005 280);
-  --card: oklch(0.17 0.008 280);
-  --card-foreground: oklch(0.97 0.005 280);
-  --popover: oklch(0.17 0.008 280);
-  --popover-foreground: oklch(0.97 0.005 280);
-  --primary: oklch(0.97 0.005 280);
-  --primary-foreground: oklch(0.13 0.005 280);
-  --secondary: oklch(0.22 0.008 280);
-  --secondary-foreground: oklch(0.97 0.005 280);
-  --muted: oklch(0.22 0.008 280);
-  --muted-foreground: oklch(0.65 0.01 280);
-  --accent: oklch(0.26 0.01 280);
-  --accent-foreground: oklch(0.97 0.005 280);
-  --destructive: oklch(0.65 0.22 22);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.65 0.22 22);
-  --chart-1: oklch(0.65 0.22 22);
-  --chart-2: oklch(0.7 0.18 60);
-  --chart-3: oklch(0.6 0.18 280);
-  --chart-4: oklch(0.65 0.18 160);
-  --chart-5: oklch(0.55 0.2 30);
-  --sidebar: oklch(0.17 0.008 280);
-  --sidebar-foreground: oklch(0.97 0.005 280);
-  --sidebar-primary: oklch(0.97 0.005 280);
-  --sidebar-primary-foreground: oklch(0.13 0.005 280);
-  --sidebar-accent: oklch(0.22 0.008 280);
-  --sidebar-accent-foreground: oklch(0.97 0.005 280);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.65 0.22 22);
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #0a0a0a;
+  --card-foreground: #ffffff;
+  --popover: #0a0a0a;
+  --popover-foreground: #ffffff;
+  --primary: #0099FF;
+  --primary-foreground: #000000;
+  --secondary: #111111;
+  --secondary-foreground: #ffffff;
+  --muted: #111111;
+  --muted-foreground: #888888;
+  --accent: #0066FF;
+  --accent-foreground: #ffffff;
+  --destructive: #ff3b3b;
+  --border: #1a1a1a;
+  --input: #1a1a1a;
+  --ring: #0099FF;
+  --chart-1: #0099FF;
+  --chart-2: #0066FF;
+  --chart-3: #00CCFF;
+  --chart-4: #0044CC;
+  --chart-5: #33AAFF;
+  --sidebar: #050505;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #0099FF;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #111111;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1a1a1a;
+  --sidebar-ring: #0099FF;
 }
 
 .dark {
-  --background: oklch(0.13 0.005 280);
-  --foreground: oklch(0.97 0.005 280);
-  --card: oklch(0.17 0.008 280);
-  --card-foreground: oklch(0.97 0.005 280);
-  --popover: oklch(0.17 0.008 280);
-  --popover-foreground: oklch(0.97 0.005 280);
-  --primary: oklch(0.97 0.005 280);
-  --primary-foreground: oklch(0.13 0.005 280);
-  --secondary: oklch(0.22 0.008 280);
-  --secondary-foreground: oklch(0.97 0.005 280);
-  --muted: oklch(0.22 0.008 280);
-  --muted-foreground: oklch(0.65 0.01 280);
-  --accent: oklch(0.26 0.01 280);
-  --accent-foreground: oklch(0.97 0.005 280);
-  --destructive: oklch(0.65 0.22 22);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.65 0.22 22);
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #0a0a0a;
+  --card-foreground: #ffffff;
+  --popover: #0a0a0a;
+  --popover-foreground: #ffffff;
+  --primary: #0099FF;
+  --primary-foreground: #000000;
+  --secondary: #111111;
+  --secondary-foreground: #ffffff;
+  --muted: #111111;
+  --muted-foreground: #888888;
+  --accent: #0066FF;
+  --accent-foreground: #ffffff;
+  --destructive: #ff3b3b;
+  --border: #1a1a1a;
+  --input: #1a1a1a;
+  --ring: #0099FF;
 }
 
 @layer base {
@@ -108,19 +108,18 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: oklch(1 0 0 / 0.1);
-    border-radius: 4px;
+    background: #1a1a1a;
+    border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(1 0 0 / 0.2);
+    background: #0099FF;
   }
 }

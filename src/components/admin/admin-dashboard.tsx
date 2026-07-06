@@ -228,7 +228,7 @@ export function AdminDashboard() {
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2 text-rose-400">
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2 text-blue-400">
               <LogOut className="h-4 w-4" />
               Sign Out
             </Button>
@@ -243,7 +243,7 @@ export function AdminDashboard() {
             <TabsTrigger value="index" className="gap-1.5">
               <DatabaseIcon className="h-4 w-4" /> Index
               {indexStatus?.status === 'running' && (
-                <Loader2 className="h-3 w-3 animate-spin text-rose-400" />
+                <Loader2 className="h-3 w-3 animate-spin text-blue-400" />
               )}
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-1.5">
@@ -266,7 +266,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Indexed Channels</CardTitle>
-                  <DatabaseIcon className="h-4 w-4 text-rose-400" />
+                  <DatabaseIcon className="h-4 w-4 text-blue-400" />
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -284,7 +284,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
-                  <Users className="h-4 w-4 text-rose-400" />
+                  <Users className="h-4 w-4 text-blue-400" />
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -300,7 +300,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Favorites Saved</CardTitle>
-                  <Heart className="h-4 w-4 text-rose-400" />
+                  <Heart className="h-4 w-4 text-blue-400" />
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -316,7 +316,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Watch Events</CardTitle>
-                  <Clock className="h-4 w-4 text-rose-400" />
+                  <Clock className="h-4 w-4 text-blue-400" />
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -335,17 +335,17 @@ export function AdminDashboard() {
             <Card className="mt-4 border-border/40">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${config?.health.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${config?.health.ok ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-500/10 text-blue-400'}`}>
                     {config?.health.ok ? <CheckCircle2 className="h-6 w-6" /> : <XCircle className="h-6 w-6" />}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold">Broadcasting Status</h3>
                       {config?.health.ok && (
-                        <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 gap-1.5">
+                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 gap-1.5">
                           <span className="relative flex h-1.5 w-1.5">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />
                           </span>
                           LIVE
                         </Badge>
@@ -355,11 +355,11 @@ export function AdminDashboard() {
                       <Skeleton className="h-4 w-48 mt-2" />
                     ) : config?.health.ok ? (
                       <>
-                        <p className="text-sm text-emerald-400 mt-1">Database connected — broadcasting active</p>
+                        <p className="text-sm text-blue-400 mt-1">Database connected — broadcasting active</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-xs">
                           <div>
                             <div className="text-muted-foreground">Source</div>
-                            <div className="font-medium text-emerald-400">iptv-org/iptv</div>
+                            <div className="font-medium text-blue-400">iptv-org/iptv</div>
                           </div>
                           <div>
                             <div className="text-muted-foreground">Total Channels</div>
@@ -382,7 +382,7 @@ export function AdminDashboard() {
                         </div>
                       </>
                     ) : (
-                      <p className="text-sm text-rose-400 mt-1">{config?.health?.error || 'Database not indexed — click the Index tab to start'}</p>
+                      <p className="text-sm text-blue-400 mt-1">{config?.health?.error || 'Database not indexed — click the Index tab to start'}</p>
                     )}
                   </div>
                 </div>
@@ -397,7 +397,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <DatabaseIcon className="h-5 w-5 text-rose-400" />
+                    <DatabaseIcon className="h-5 w-5 text-blue-400" />
                     Channel Catalog Index
                   </CardTitle>
                 </CardHeader>
@@ -410,20 +410,20 @@ export function AdminDashboard() {
                       <div
                         className={`flex items-start gap-3 p-4 rounded-lg border ${
                           indexStatus.status === 'success'
-                            ? 'border-emerald-500/30 bg-emerald-500/5'
+                            ? 'border-blue-500/30 bg-blue-500/5'
                             : indexStatus.status === 'running'
                             ? 'border-amber-500/30 bg-amber-500/5'
                             : indexStatus.status === 'error'
-                            ? 'border-rose-500/30 bg-rose-500/5'
+                            ? 'border-blue-500/30 bg-blue-500/5'
                             : 'border-border/40 bg-muted/30'
                         }`}
                       >
                         {indexStatus.status === 'success' ? (
-                          <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+                          <CheckCircle2 className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
                         ) : indexStatus.status === 'running' ? (
                           <Loader2 className="h-5 w-5 text-amber-400 mt-0.5 shrink-0 animate-spin" />
                         ) : indexStatus.status === 'error' ? (
-                          <XCircle className="h-5 w-5 text-rose-400 mt-0.5 shrink-0" />
+                          <XCircle className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
                         ) : (
                           <DatabaseIcon className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                         )}
@@ -436,7 +436,7 @@ export function AdminDashboard() {
                             {indexStatus.status === 'never' && 'No index yet — click "Index Now" to start'}
                           </p>
                           {indexStatus.error && (
-                            <p className="text-xs text-rose-400 mt-1 font-mono">{indexStatus.error}</p>
+                            <p className="text-xs text-blue-400 mt-1 font-mono">{indexStatus.error}</p>
                           )}
                           {indexStatus.completedAt && (
                             <p className="text-xs text-muted-foreground mt-1">
@@ -470,13 +470,13 @@ export function AdminDashboard() {
                           <div className="text-sm font-medium mt-1 flex items-center gap-1.5">
                             {config?.health.ok ? (
                               <>
-                                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                                <span className="text-emerald-400">Connected</span>
+                                <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+                                <span className="text-blue-400">Connected</span>
                               </>
                             ) : (
                               <>
-                                <span className="h-2 w-2 rounded-full bg-rose-400" />
-                                <span className="text-rose-400">Offline</span>
+                                <span className="h-2 w-2 rounded-full bg-blue-400" />
+                                <span className="text-blue-400">Offline</span>
                               </>
                             )}
                           </div>
@@ -517,7 +517,7 @@ export function AdminDashboard() {
                       {/* How it works */}
                       <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
                         <div className="flex items-center gap-2 mb-2">
-                          <Radio className="h-4 w-4 text-rose-400" />
+                          <Radio className="h-4 w-4 text-blue-400" />
                           <h4 className="text-sm font-semibold">How indexing works</h4>
                         </div>
                         <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4">
@@ -538,7 +538,7 @@ export function AdminDashboard() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Tv className="h-5 w-5 text-rose-400" />
+                      <Tv className="h-5 w-5 text-blue-400" />
                       Top Categories (from index)
                     </CardTitle>
                   </CardHeader>
@@ -568,7 +568,7 @@ export function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-rose-400" />
+                  <Users className="h-5 w-5 text-blue-400" />
                   Registered Users
                 </CardTitle>
               </CardHeader>
@@ -590,7 +590,7 @@ export function AdminDashboard() {
                           className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/40 bg-card hover:bg-accent/50 transition-colors"
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-400 text-sm font-medium">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium">
                               {(u.name || u.email)[0].toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
@@ -606,7 +606,7 @@ export function AdminDashboard() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDeleteUser(u.id, u.email)}
-                              className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                              className="text-blue-400 hover:text-rose-300 hover:bg-blue-500/10"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -625,7 +625,7 @@ export function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Server className="h-5 w-5 text-rose-400" />
+                  <Server className="h-5 w-5 text-blue-400" />
                   Channel Database Source
                 </CardTitle>
               </CardHeader>
@@ -674,7 +674,7 @@ export function AdminDashboard() {
                           <Lock className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">Auth Required</span>
                         </div>
-                        <span className="text-sm font-medium text-emerald-400">No (public)</span>
+                        <span className="text-sm font-medium text-blue-400">No (public)</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2">
@@ -701,13 +701,13 @@ export function AdminDashboard() {
                           <RefreshCcw className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">Auto-Refresh</span>
                         </div>
-                        <span className="text-sm font-medium text-emerald-400">Every 6 hours</span>
+                        <span className="text-sm font-medium text-blue-400">Every 6 hours</span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <XCircle className="h-10 w-10 text-rose-400 mb-3" />
+                    <XCircle className="h-10 w-10 text-blue-400 mb-3" />
                     <p className="text-sm font-medium">Database not indexed</p>
                     <p className="text-xs text-muted-foreground mt-1">{config.health.error || 'Click the Index tab to start indexing'}</p>
                   </div>
@@ -723,7 +723,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Tv className="h-5 w-5 text-rose-400" />
+                    <Tv className="h-5 w-5 text-blue-400" />
                     Streaming Configuration
                   </CardTitle>
                 </CardHeader>
@@ -769,7 +769,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Database className="h-5 w-5 text-rose-400" />
+                    <Database className="h-5 w-5 text-blue-400" />
                     Database Configuration
                   </CardTitle>
                 </CardHeader>
@@ -800,12 +800,12 @@ export function AdminDashboard() {
                           <div className="text-sm font-medium mt-1 font-mono">{config.mongo.appName}</div>
                         </div>
                       </div>
-                      <div className="p-3 rounded-lg bg-rose-500/5 border border-rose-500/20">
+                      <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Lock className="h-3 w-3" />
                           Connection String (masked)
                         </div>
-                        <div className="text-xs font-mono mt-1 break-all text-rose-400">{config.mongo.masked}</div>
+                        <div className="text-xs font-mono mt-1 break-all text-blue-400">{config.mongo.masked}</div>
                         <p className="text-[10px] text-muted-foreground mt-2">
                           Credentials are stored securely as environment variables and never exposed in the client.
                         </p>
@@ -821,7 +821,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Settings2 className="h-5 w-5 text-rose-400" />
+                    <Settings2 className="h-5 w-5 text-blue-400" />
                     IPTV Credentials
                   </CardTitle>
                 </CardHeader>
@@ -855,7 +855,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Tv className="h-5 w-5 text-rose-400" />
+                    <Tv className="h-5 w-5 text-blue-400" />
                     Channel Categories
                   </CardTitle>
                 </CardHeader>
@@ -1051,7 +1051,7 @@ function ZapierTab() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5 text-rose-400" />
+            <Send className="h-5 w-5 text-blue-400" />
             Zapier Webhook Configuration
           </CardTitle>
         </CardHeader>
@@ -1097,7 +1097,7 @@ function ZapierTab() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Radio className="h-5 w-5 text-rose-400" />
+            <Radio className="h-5 w-5 text-blue-400" />
             Send Broadcast Message
           </CardTitle>
         </CardHeader>
@@ -1141,7 +1141,7 @@ function ZapierTab() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Tv className="h-5 w-5 text-rose-400" />
+            <Tv className="h-5 w-5 text-blue-400" />
             Broadcast Channel List to Zapier
           </CardTitle>
         </CardHeader>
@@ -1202,8 +1202,8 @@ function ZapierTab() {
               )}
             </div>
             {channelResult && (
-              <div className={`p-3 rounded-lg border ${channelResult.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-rose-500/30 bg-rose-500/5'}`}>
-                <p className={`text-sm font-medium ${channelResult.ok ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <div className={`p-3 rounded-lg border ${channelResult.ok ? 'border-blue-500/30 bg-blue-500/5' : 'border-blue-500/30 bg-blue-500/5'}`}>
+                <p className={`text-sm font-medium ${channelResult.ok ? 'text-blue-400' : 'text-blue-400'}`}>
                   {channelResult.ok
                     ? `✓ Sent ${channelResult.channelsSent} channels (${channelResult.format} format) to Zapier`
                     : `✗ Failed: ${channelResult.error}`
@@ -1225,7 +1225,7 @@ function ZapierTab() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-rose-400" />
+              <Activity className="h-5 w-5 text-blue-400" />
               Broadcast Log
             </CardTitle>
             {logs.length > 0 && (
