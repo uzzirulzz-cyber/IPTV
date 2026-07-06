@@ -2,11 +2,10 @@
 
 import { Suspense } from 'react'
 import { AppHeader } from '@/components/layout/app-header'
+import { AppFooter } from '@/components/layout/app-footer'
 import { VideoPlayer } from '@/components/player/video-player'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Play } from 'lucide-react'
 
 function PlayerContent() {
   const searchParams = useSearchParams()
@@ -47,16 +46,7 @@ export default function PlayerPage() {
           <PlayerContent />
         </Suspense>
       </main>
-      <footer className="border-t border-border/40 py-6 mt-auto">
-        <div className="mx-auto max-w-7xl px-4 md:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-foreground">Playbeat Digital</span>
-            <span>·</span>
-            <span>Now Playing</span>
-          </div>
-          <div>Powered by MongoDB · HLS.js · Next.js</div>
-        </div>
-      </footer>
+      <AppFooter label="Now Playing" />
     </div>
   )
 }

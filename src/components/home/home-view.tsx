@@ -9,6 +9,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Play, Radio, Tv, Heart, Clock, ArrowRight, Trash2, Flame, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 
+const HERO_BG_IMAGES = [
+  '/bg/bg1.jpg',
+  '/bg/bg2.jpg',
+  '/bg/bg3.jpg',
+  '/bg/bg4.jpg',
+  '/bg/bg5.jpg',
+  '/bg/bg6.jpg',
+]
+
 interface WatchHistoryItem {
   id: string
   channelId: string
@@ -78,6 +87,7 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
   const [featured, setFeatured] = useState<FeaturedChannel[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
   const [loadingFeatured, setLoadingFeatured] = useState(true)
+  const [heroBg] = useState(() => HERO_BG_IMAGES[Math.floor(Math.random() * HERO_BG_IMAGES.length)])
 
   const loadHistory = async () => {
     if (!user) {
@@ -127,9 +137,17 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
   return (
     <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-12">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl border border-border/40 bg-gradient-to-br from-background via-background to-rose-500/5 p-8 md:p-14">
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-rose-500/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-3xl border border-border/40 p-8 md:p-14">
+        {/* Random background image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${heroBg})` }}
+          aria-hidden="true"
+        />
+        {/* Dark gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/40" aria-hidden="true" />
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-rose-500/20 blur-3xl" aria-hidden="true" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" aria-hidden="true" />
         <div className="relative z-10 max-w-3xl">
           <Badge variant="outline" className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
             <span className="relative flex h-1.5 w-1.5">
