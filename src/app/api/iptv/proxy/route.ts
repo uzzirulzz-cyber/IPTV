@@ -40,10 +40,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Fetch the m3u8 with a browser-like User-Agent
+    // Fetch the m3u8 with VLC User-Agent (bypasses Cloudflare on opplex.ch)
     const res = await fetch(upstreamUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
         Accept: '*/*',
       },
       redirect: 'follow',
