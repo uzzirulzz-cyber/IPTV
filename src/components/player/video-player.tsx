@@ -64,13 +64,13 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
     setLoadStartTime(Date.now())
     ;(async () => {
       try {
-        // Try m3u8 first, then fall back to ts
-        const res = await fetch(`/api/iptv/stream?stream_id=${activeChannel.channelId}&format=m3u8`, { cache: 'no-store' })
-        const data = await res.json()
+        // Build the proxy URL — the proxy fetches the m3u8 from the IPTV
+        // server (following redirects) and rewrites relative segment URLs
+        // to absolute URLs so HLS.js can load them.
+        const proxyUrl = `/api/iptv/proxy?stream_id=${encodeURIComponent(activeChannel.channelId)}&format=m3u8`
         if (cancelled) return
-        if (!res.ok) throw new Error(data.error || 'Failed to get stream URL')
-        setStreamUrl(data.url)
-        setStreamFormat(data.format || 'm3u8')
+        setStreamUrl(proxyUrl)
+        setStreamFormat('m3u8')
       } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : 'Failed to load stream')
@@ -97,8 +97,8 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
     }).catch(() => {})
   }, [activeChannel])
 
-  // Initialize HLS.js or direct video for TS streams
-  const initPlayer = useCallback((url: string, format: string) => {
+  // Initialize HLS.js player
+  const initPlayer = useCallback((url: string, _format: string) => {
     const video = videoRef.current
     if (!video) return
 
@@ -106,38 +106,6 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
     if (hlsRef.current) {
       hlsRef.current.destroy()
       hlsRef.current = null
-    }
-
-    // TS streams — play directly via the video element (MPEG-TS is natively
-    // supported by most browsers via the video tag with proper MIME).
-    // If direct playback fails, we fall back to HLS by rewriting the URL.
-    if (format === 'ts' || url.endsWith('.ts') || (!url.endsWith('.m3u8') && !url.includes('.m3u8'))) {
-      video.src = url
-      video.addEventListener(
-        'loadedmetadata',
-        () => {
-          setLoading(false)
-          setError(null)
-          video.play().catch((err) => console.warn('Auto-play blocked:', err))
-        },
-        { once: true }
-      )
-      video.addEventListener(
-        'error',
-        () => {
-          // TS direct playback failed — try building an m3u8 URL as fallback
-          console.warn('TS playback failed, trying m3u8 fallback')
-          const m3u8Url = url.replace(/\.ts$/, '.m3u8')
-          if (m3u8Url !== url) {
-            initPlayer(m3u8Url, 'm3u8')
-          } else {
-            setError('Unable to play this stream format')
-            setLoading(false)
-          }
-        },
-        { once: true }
-      )
-      return
     }
 
     // Native HLS (Safari)
@@ -203,31 +171,41 @@ export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: Ac
       if (!data.fatal) return
       console.warn('HLS fatal error:', data.type, data.details)
 
+      // If the proxy returned an error response, show a clear message
+      if (data.response && data.response.code === 502) {
+        setError('This channel is not available on the IPTV server. Try another channel.')
+        setLoading(false)
+        hls.destroy()
+        return
+      }
+
       switch (data.type) {
         case Hls.ErrorTypes.NETWORK_ERROR:
           // Try to recover network errors
-          if (recoveryAttempts.current < 5) {
+          if (recoveryAttempts.current < 3) {
             recoveryAttempts.current++
-            toast.info(`Network error — retrying (${recoveryAttempts.current}/5)`)
-            setTimeout(() => hls.startLoad(), 1000)
+            toast.info(`Network error — retrying (${recoveryAttempts.current}/3)`)
+            setTimeout(() => hls.startLoad(), 1500)
           } else {
-            setError('Network error — unable to recover after 5 attempts')
+            setError('Network error — this channel may be offline. Try another channel.')
             setLoading(false)
+            hls.destroy()
           }
           break
         case Hls.ErrorTypes.MEDIA_ERROR:
           // Try to recover media errors
-          if (recoveryAttempts.current < 5) {
+          if (recoveryAttempts.current < 3) {
             recoveryAttempts.current++
-            toast.info(`Media error — recovering (${recoveryAttempts.current}/5)`)
+            toast.info(`Media error — recovering (${recoveryAttempts.current}/3)`)
             hls.recoverMediaError()
           } else {
-            setError('Media error — unable to recover after 5 attempts')
+            setError('Media error — unable to play this channel. Try another.')
             setLoading(false)
+            hls.destroy()
           }
           break
         default:
-          setError(`Fatal error: ${data.details}`)
+          setError(`This channel could not be loaded. Try another channel.`)
           setLoading(false)
           hls.destroy()
           break
