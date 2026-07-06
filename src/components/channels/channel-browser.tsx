@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tv, Search, Heart, Play, AlertCircle, RefreshCw, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ChannelLogo } from './channel-logo'
 
 interface Category {
   category_id: string
@@ -311,18 +312,12 @@ export function ChannelBrowser() {
                       })}
                     >
                       <div className="absolute inset-0 flex items-center justify-center p-3">
-                        {logo ? (
-                          <img
-                            src={logo}
-                            alt={channel.name}
-                            className="max-h-12 max-w-full object-contain opacity-80 group-hover:opacity-100 transition-opacity"
-                            onError={(e) => {
-                              ;(e.target as HTMLImageElement).style.display = 'none'
-                            }}
-                          />
-                        ) : (
-                          <Tv className="h-8 w-8 text-muted-foreground" />
-                        )}
+                        <ChannelLogo
+                          src={logo || null}
+                          name={channel.name}
+                          className="max-h-12 max-w-full object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+                          iconClassName="h-10 w-10"
+                        />
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/0" />
                       <div className="absolute bottom-0 left-0 right-0 p-2">
