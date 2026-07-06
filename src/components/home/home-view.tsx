@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAppStore } from '@/store/app-store'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -72,8 +71,8 @@ function ChannelTile({ ch, onClick }: { ch: FeaturedChannel; onClick: () => void
   )
 }
 
-export function HomeView() {
-  const { setView, openChannel } = useAppStore()
+export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }) {
+  const go = (path: string) => onNavigate ? onNavigate(path) : (window.location.href = path)
   const { user } = useAuth()
   const [history, setHistory] = useState<WatchHistoryItem[]>([])
   const [featured, setFeatured] = useState<FeaturedChannel[]>([])
@@ -149,11 +148,11 @@ export function HomeView() {
             Playbeat Digital brings you a premium live TV experience with thousands of channels across news, sports, movies, entertainment, and more — all in stunning quality with rock-solid stability.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button size="lg" onClick={() => setView('channels')} className="gap-2">
+            <Button size="lg" onClick={() => go('/channels')} className="gap-2">
               <Tv className="h-4 w-4" />
               Browse Channels
             </Button>
-            <Button size="lg" variant="outline" onClick={() => setView('favorites')} className="gap-2">
+            <Button size="lg" variant="outline" onClick={() => go('/favorites')} className="gap-2">
               <Heart className="h-4 w-4" />
               My Favorites
             </Button>
@@ -198,7 +197,7 @@ export function HomeView() {
             <Flame className="h-5 w-5 text-rose-400" />
             <h2 className="text-xl md:text-2xl font-semibold">Featured Channels</h2>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setView('channels')} className="gap-2">
+          <Button variant="ghost" size="sm" onClick={() => go('/channels')} className="gap-2">
             View all <ArrowRight className="h-3 w-3" />
           </Button>
         </div>
@@ -215,7 +214,7 @@ export function HomeView() {
               <p className="text-muted-foreground">
                 No featured channels yet. An admin needs to index the catalog first.
               </p>
-              <Button className="mt-4 gap-2" onClick={() => setView('admin')}>
+              <Button className="mt-4 gap-2" onClick={() => go('/admin')}>
                 <Radio className="h-4 w-4" /> Go to Admin
               </Button>
             </CardContent>
@@ -226,12 +225,15 @@ export function HomeView() {
               <ChannelTile
                 key={ch.streamId}
                 ch={ch}
-                onClick={() => openChannel({
-                  channelId: ch.streamId,
-                  channelName: ch.name,
-                  channelLogo: ch.logo || null,
-                  category: ch.category,
-                })}
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    id: ch.streamId,
+                    name: ch.name,
+                    logo: ch.logo || '',
+                    category: ch.category,
+                  })
+                  go(`/player?${params.toString()}`)
+                }}
               />
             ))}
           </div>
@@ -264,7 +266,7 @@ export function HomeView() {
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <Clock className="h-10 w-10 text-muted-foreground mb-3" />
                 <p className="text-muted-foreground">No watch history yet. Start watching to see your recent channels here.</p>
-                <Button className="mt-4 gap-2" onClick={() => setView('channels')}>
+                <Button className="mt-4 gap-2" onClick={() => go('/channels')}>
                   <Radio className="h-4 w-4" /> Browse Channels
                 </Button>
               </CardContent>
@@ -274,12 +276,15 @@ export function HomeView() {
               {history.slice(0, 12).map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => openChannel({
-                    channelId: item.channelId,
-                    channelName: item.channelName,
-                    channelLogo: item.channelLogo,
-                    category: item.category,
-                  })}
+                  onClick={() => {
+                    const params = new URLSearchParams({
+                      id: item.channelId,
+                      name: item.channelName,
+                      logo: item.channelLogo || '',
+                      category: item.category || '',
+                    })
+                    go(`/player?${params.toString()}`)
+                  }}
                   className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-rose-500/40 transition-all"
                 >
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -324,7 +329,7 @@ export function HomeView() {
             <p className="text-sm text-muted-foreground">
               Browse thousands of live channels organized by category. Search by name, tap to play, and switch instantly without distortion.
             </p>
-            <Button variant="link" className="px-0 mt-3 text-rose-400" onClick={() => setView('channels')}>
+            <Button variant="link" className="px-0 mt-3 text-rose-400" onClick={() => go('/channels')}>
               Browse now <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           </CardContent>
@@ -340,7 +345,7 @@ export function HomeView() {
             <p className="text-sm text-muted-foreground">
               Save your favorite channels with a single tap and access them quickly from anywhere. Synced across sessions when signed in.
             </p>
-            <Button variant="link" className="px-0 mt-3 text-rose-400" onClick={() => setView('favorites')}>
+            <Button variant="link" className="px-0 mt-3 text-rose-400" onClick={() => go('/favorites')}>
               View favorites <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           </CardContent>

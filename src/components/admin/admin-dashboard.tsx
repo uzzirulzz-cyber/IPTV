@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useAppStore } from '@/store/app-store'
+import { useRouter } from 'next/navigation'
 import {
   Users,
   Heart,
@@ -105,7 +105,7 @@ interface IndexStatus {
 }
 
 export function AdminDashboard() {
-  const { setView } = useAppStore()
+  const router = useRouter()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [config, setConfig] = useState<IptvConfig | null>(null)
   const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null)
@@ -207,7 +207,7 @@ export function AdminDashboard() {
   const handleSignOut = async () => {
     await fetch('/api/admin/signout', { method: 'POST' })
     toast.success('Signed out of admin')
-    setView('home')
+    router.push('/')
   }
 
   const handleDeleteUser = async (userId: string, email: string) => {

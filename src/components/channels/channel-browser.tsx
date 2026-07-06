@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useAppStore } from '@/store/app-store'
+import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -29,7 +29,9 @@ interface Channel {
 const PAGE_SIZE = 200
 
 export function ChannelBrowser() {
-  const { selectedCategory, setSelectedCategory, searchQuery, setSearchQuery, openChannel } = useAppStore()
+  const router = useRouter()
+  const [selectedCategory, setSelectedCategoryState] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
   const [channels, setChannels] = useState<Channel[]>([])
   const [total, setTotal] = useState(0)
@@ -40,12 +42,30 @@ export function ChannelBrowser() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [page, setPage] = useState(0)
 
+  const setSelectedCategory = (cat: string | null) => {
+    setSelectedCategoryState(cat)
+    setPage(0)
+  }
+
   // Debounced search
   const [searchInput, setSearchInput] = useState(searchQuery)
   useEffect(() => {
-    const t = setTimeout(() => setSearchQuery(searchInput), 350)
+    const t = setTimeout(() => {
+      setSearchQuery(searchInput)
+      setPage(0)
+    }, 350)
     return () => clearTimeout(t)
-  }, [searchInput, setSearchQuery])
+  }, [searchInput])
+
+  const openChannel = (channel: { channelId: string; channelName: string; channelLogo?: string | null; category?: string | null }) => {
+    const params = new URLSearchParams({
+      id: channel.channelId,
+      name: channel.channelName,
+      logo: channel.channelLogo || '',
+      category: channel.category || '',
+    })
+    router.push(`/player?${params.toString()}`)
+  }
 
   const loadCatalog = useCallback(async (categoryId?: string, search?: string, pageNum = 0, append = false) => {
     if (!append) setLoading(true)

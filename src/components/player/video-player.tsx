@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { useAppStore } from '@/store/app-store'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -22,8 +22,17 @@ import {
 import { toast } from 'sonner'
 import Hls from 'hls.js'
 
-export function VideoPlayer() {
-  const { activeChannel, setView } = useAppStore()
+interface ActiveChannel {
+  channelId: string
+  channelName: string
+  channelLogo?: string | null
+  category?: string | null
+}
+
+export function VideoPlayer({ activeChannel: propChannel }: { activeChannel?: ActiveChannel | null }) {
+  const router = useRouter()
+  const activeChannel = propChannel || null
+  const setView = (v: string) => router.push(v === 'channels' ? '/channels' : v === 'home' ? '/' : '/')
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const hlsRef = useRef<Hls | null>(null)

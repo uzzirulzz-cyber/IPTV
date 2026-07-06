@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAppStore } from '@/store/app-store'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -18,7 +18,8 @@ interface FavoriteItem {
 }
 
 export function FavoritesView() {
-  const { setView, openChannel } = useAppStore()
+  const router = useRouter()
+  const go = (path: string) => router.push(path)
   const { user, loading: authLoading } = useAuth()
   const [favorites, setFavorites] = useState<FavoriteItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,7 +67,7 @@ export function FavoritesView() {
             <p className="text-sm text-muted-foreground max-w-md mb-6">
               Sign in with your email to save channels you love and access them quickly from any device.
             </p>
-            <Button onClick={() => setView('channels')} className="gap-2">
+            <Button onClick={() => go('/channels')} className="gap-2">
               <Tv className="h-4 w-4" />
               Browse Channels
             </Button>
@@ -99,7 +100,7 @@ export function FavoritesView() {
             <p className="text-sm text-muted-foreground max-w-md mb-6">
               Tap the heart icon on any channel to add it to your favorites for quick access.
             </p>
-            <Button onClick={() => setView('channels')} className="gap-2">
+            <Button onClick={() => go('/channels')} className="gap-2">
               <Tv className="h-4 w-4" />
               Browse Channels
               <ArrowRight className="h-4 w-4" />
@@ -112,12 +113,15 @@ export function FavoritesView() {
             <div
               key={fav.id}
               className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-rose-500/40 transition-all cursor-pointer"
-              onClick={() => openChannel({
-                channelId: fav.channelId,
-                channelName: fav.channelName,
-                channelLogo: fav.channelLogo,
-                category: fav.category,
-              })}
+              onClick={() => {
+                const params = new URLSearchParams({
+                  id: fav.channelId,
+                  name: fav.channelName,
+                  logo: fav.channelLogo || '',
+                  category: fav.category || '',
+                })
+                go(`/player?${params.toString()}`)
+              }}
             >
               <div className="absolute inset-0 flex items-center justify-center p-3">
                 {fav.channelLogo ? (

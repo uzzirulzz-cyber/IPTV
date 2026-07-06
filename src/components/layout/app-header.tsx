@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAppStore } from '@/store/app-store'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,7 +28,8 @@ import { Home, Tv, Heart, Shield, LogOut, User as UserIcon, Radio, Menu } from '
 import { toast } from 'sonner'
 
 export function AppHeader() {
-  const { view, setView } = useAppStore()
+  const router = useRouter()
+  const pathname = usePathname()
   const { user, loading, signIn, signOut } = useAuth()
   const [signInOpen, setSignInOpen] = useState(false)
   const [email, setEmail] = useState('')
@@ -56,34 +57,24 @@ export function AppHeader() {
   const handleSignOut = async () => {
     await signOut()
     toast.success('Signed out')
-    if (view === 'favorites') setView('home')
+    if (pathname === '/favorites') router.push('/')
   }
 
-  const navItems: { label: string; view: typeof view; icon: React.ReactNode }[] = [
-    { label: 'Home', view: 'home', icon: <Home className="h-4 w-4" /> },
-    { label: 'Channels', view: 'channels', icon: <Tv className="h-4 w-4" /> },
-    { label: 'Favorites', view: 'favorites', icon: <Heart className="h-4 w-4" /> },
+  const navItems: { label: string; path: string; icon: React.ReactNode }[] = [
+    { label: 'Home', path: '/', icon: <Home className="h-4 w-4" /> },
+    { label: 'Channels', path: '/channels', icon: <Tv className="h-4 w-4" /> },
+    { label: 'Favorites', path: '/favorites', icon: <Heart className="h-4 w-4" /> },
   ]
 
-  const NavButtons = () => (
-    <>
-      {navItems.map((item) => (
-        <Button
-          key={item.view}
-          variant={view === item.view ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => {
-            setView(item.view)
-            setMobileMenuOpen(false)
-          }}
-          className="gap-2"
-        >
-          {item.icon}
-          {item.label}
-        </Button>
-      ))}
-    </>
-  )
+  const isActive = (path: string) => {
+    if (path === '/') return pathname === '/'
+    return pathname.startsWith(path)
+  }
+
+  const navigate = (path: string) => {
+    router.push(path)
+    setMobileMenuOpen(false)
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -91,7 +82,7 @@ export function AppHeader() {
         {/* Logo + LIVE indicator */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setView('home')}
+            onClick={() => navigate('/')}
             className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
             <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-500/20">
@@ -113,7 +104,18 @@ export function AppHeader() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
-          <NavButtons />
+          {navItems.map((item) => (
+            <Button
+              key={item.path}
+              variant={isActive(item.path) ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => navigate(item.path)}
+              className="gap-2"
+            >
+              {item.icon}
+              {item.label}
+            </Button>
+          ))}
         </nav>
 
         {/* Right side: Admin + Auth */}
@@ -121,7 +123,7 @@ export function AppHeader() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setView('admin')}
+            onClick={() => navigate('/admin')}
             title="Admin Panel"
             className="hidden sm:inline-flex"
           >
@@ -181,13 +183,10 @@ export function AppHeader() {
           <div className="flex flex-col gap-2">
             {navItems.map((item) => (
               <Button
-                key={item.view}
-                variant={view === item.view ? 'default' : 'ghost'}
+                key={item.path}
+                variant={isActive(item.path) ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => {
-                  setView(item.view)
-                  setMobileMenuOpen(false)
-                }}
+                onClick={() => navigate(item.path)}
                 className="justify-start gap-2"
               >
                 {item.icon}
@@ -197,10 +196,7 @@ export function AppHeader() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                setView('admin')
-                setMobileMenuOpen(false)
-              }}
+              onClick={() => navigate('/admin')}
               className="justify-start gap-2"
             >
               <Shield className="h-4 w-4" />
