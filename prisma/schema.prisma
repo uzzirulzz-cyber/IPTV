@@ -93,3 +93,25 @@ model IndexMeta {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+/// Zapier webhook configuration (single row, key = "zapier")
+model ZapierConfig {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  key         String   @unique @default("zapier")
+  webhookUrl  String?
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Log of broadcast messages sent to Zapier
+model ZapierBroadcast {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  message     String
+  payload     String   // JSON string of the full payload sent
+  status      String   @default("pending") // "pending" | "sent" | "failed"
+  response    String?  // Response from Zapier (truncated)
+  sentAt      DateTime @default(now())
+
+  @@index([sentAt])
+}

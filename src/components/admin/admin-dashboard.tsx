@@ -7,6 +7,10 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 import { useRouter } from 'next/navigation'
 import {
   Users,
@@ -30,6 +34,7 @@ import {
   Loader2,
   RefreshCcw,
   Radio,
+  Send,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -231,7 +236,7 @@ export function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-auto lg:grid-flow-col">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 lg:w-auto lg:grid-flow-col">
             <TabsTrigger value="overview" className="gap-1.5">
               <Activity className="h-4 w-4" /> Overview
             </TabsTrigger>
@@ -249,6 +254,9 @@ export function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="iptv" className="gap-1.5">
               <Settings2 className="h-4 w-4" /> IPTV Config
+            </TabsTrigger>
+            <TabsTrigger value="zapier" className="gap-1.5">
+              <Send className="h-4 w-4" /> Zapier
             </TabsTrigger>
           </TabsList>
 
@@ -872,8 +880,264 @@ export function AdminDashboard() {
               </Card>
             </div>
           </TabsContent>
+
+          {/* Zapier Tab */}
+          <TabsContent value="zapier">
+            <ZapierTab />
+          </TabsContent>
         </Tabs>
       </div>
+    </div>
+  )
+}
+
+// ─── Zapier Tab Component ───────────────────────────────────
+
+function ZapierTab() {
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [isActive, setIsActive] = useState(false)
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [logs, setLogs] = useState<Array<{
+    id: string
+    message: string
+    status: string
+    response: string | null
+    sentAt: string
+  }>>([])
+
+  const loadConfig = async () => {
+    try {
+      const res = await fetch('/api/admin/zapier/config', { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        setWebhookUrl(data.webhookUrl || '')
+        setIsActive(data.isActive || false)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadLogs = async () => {
+    try {
+      const res = await fetch('/api/admin/zapier/log', { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        setLogs(data.logs || [])
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    loadConfig()
+    loadLogs()
+  }, [])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/zapier/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ webhookUrl, isActive }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to save')
+      toast.success('Zapier webhook saved')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleBroadcast = async () => {
+    if (!message.trim()) {
+      toast.error('Enter a message to broadcast')
+      return
+    }
+    setSending(true)
+    try {
+      const res = await fetch('/api/admin/zapier/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Broadcast failed')
+      if (data.ok) {
+        toast.success('Broadcast sent to Zapier')
+        setMessage('')
+        loadLogs()
+      } else {
+        toast.error(`Broadcast failed: ${data.error || 'Unknown error'}`)
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Broadcast failed')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleClearLogs = async () => {
+    try {
+      await fetch('/api/admin/zapier/log', { method: 'DELETE' })
+      setLogs([])
+      toast.success('Log cleared')
+    } catch {
+      toast.error('Failed to clear log')
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Webhook Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Send className="h-5 w-5 text-rose-400" />
+            Zapier Webhook Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <Skeleton className="h-32" />
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="zapier-url">Webhook URL</Label>
+                <Input
+                  id="zapier-url"
+                  type="url"
+                  placeholder="https://hooks.zapier.com/hooks/catch/YOUR_WEBHOOK_ID/"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Copy this URL from Step 1 in your Zap (Zapier → Trigger → Webhooks by Zapier → Catch Hook).
+                </p>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div>
+                  <Label htmlFor="zapier-active" className="text-sm font-medium">Active</Label>
+                  <p className="text-xs text-muted-foreground">Enable to allow broadcasts to be sent</p>
+                </div>
+                <Switch
+                  id="zapier-active"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                />
+              </div>
+              <Button onClick={handleSave} disabled={saving} className="gap-2">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {saving ? 'Saving…' : 'Save Configuration'}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Broadcast Message */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Radio className="h-5 w-5 text-rose-400" />
+            Send Broadcast Message
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="zapier-message">Message</Label>
+              <Textarea
+                id="zapier-message"
+                placeholder="Your broadcast message here…"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <Button onClick={handleBroadcast} disabled={sending || !isActive} className="gap-2">
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {sending ? 'Sending…' : 'Send to Zapier'}
+              </Button>
+              {!isActive && (
+                <span className="text-xs text-muted-foreground">Enable the webhook above to send</span>
+              )}
+            </div>
+            <div className="p-3 rounded-lg bg-muted/30 border border-border/40">
+              <p className="text-xs text-muted-foreground mb-1">Payload preview:</p>
+              <pre className="text-xs font-mono text-muted-foreground overflow-x-auto">
+{JSON.stringify({
+  message: message || 'Your broadcast message here',
+  source: 'Playbeat Digital',
+  timestamp: new Date().toISOString(),
+  stats: { totalChannels: '11,254', totalCategories: 127 }
+}, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Broadcast Log */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-rose-400" />
+              Broadcast Log
+            </CardTitle>
+            {logs.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={handleClearLogs} className="text-muted-foreground">
+                Clear
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {logs.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No broadcasts sent yet</p>
+          ) : (
+            <ScrollArea className="max-h-96">
+              <div className="space-y-2">
+                {logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-card"
+                  >
+                    <Badge
+                      variant={log.status === 'sent' ? 'default' : log.status === 'failed' ? 'destructive' : 'secondary'}
+                      className="shrink-0"
+                    >
+                      {log.status}
+                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{log.message}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(log.sentAt).toLocaleString()}
+                      </div>
+                      {log.response && (
+                        <div className="text-xs text-muted-foreground mt-1 font-mono truncate">
+                          {log.response.substring(0, 100)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
