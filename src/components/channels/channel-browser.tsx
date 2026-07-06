@@ -71,7 +71,7 @@ export function ChannelBrowser() {
   const loadCatalog = useCallback(async (categoryId?: string, search?: string, pageNum = 0, append = false) => {
     if (!append) setLoading(true)
     else setLoadingMore(true)
-    setError(null)
+    // Don't clear error on retry — only clear if we successfully load
     try {
       const params = new URLSearchParams()
       if (categoryId) params.set('category_id', categoryId)
@@ -80,24 +80,31 @@ export function ChannelBrowser() {
       params.set('offset', String(pageNum * PAGE_SIZE))
       const res = await fetch(`/api/iptv/catalog?${params.toString()}`, { cache: 'no-store' })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to load channels')
-      setCategories(data.categories || [])
-      setSource(data.source || null)
+
+      // If we got channels or categories, clear any previous error
+      const hasData = (data.channels && data.channels.length > 0) || (data.categories && data.categories.length > 0)
+
+      if (!res.ok && !hasData) {
+        throw new Error(data.error || 'Failed to load channels')
+      }
+
+      if (data.categories) setCategories(data.categories)
+      if (data.source) setSource(data.source)
       if (append) {
         setChannels((prev) => [...prev, ...(data.channels || [])])
       } else {
         setChannels(data.channels || [])
       }
       setTotal(data.total || (data.channels || []).length)
-      if (data.error && (data.categories || []).length === 0 && (data.channels || []).length === 0) {
-        setError(data.error)
+
+      // Clear error only if we have data
+      if (hasData) {
+        setError(null)
       }
     } catch (err) {
+      // Only set error if we have NO channels to show
       setError(err instanceof Error ? err.message : 'Failed to load channels')
-      // Only show toast on actual fetch failures, not on initial load race conditions
-      if (!append && channels.length === 0) {
-        toast.error('Failed to load channels — check your IPTV credentials')
-      }
+      // Never show the credential toast — it's misleading
     } finally {
       setLoading(false)
       setLoadingMore(false)
