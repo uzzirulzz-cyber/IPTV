@@ -313,48 +313,38 @@ export async function getChannelsFromIndex(opts: {
  * Get featured channels for the home storefront.
  *
  * Picks DIVERSE channels from DIFFERENT categories so the storefront
- * shows a mix of news, sports, movies, kids, music, etc. — not 24 tiles
- * from the same "24/7 Movies" category.
+ * shows a mix of countries and content types.
  *
  * Strategy:
- *   1. Get all featured categories (sorted by priority).
- *   2. From each category, pick 1-2 channels with logos.
+ *   1. Get all featured categories.
+ *   2. From each category, pick 1-2 channels (logos optional).
  *   3. Rotate through categories until we have `limit` channels.
  */
 export async function getFeaturedChannels(limit: number = 24) {
-  // Categories that make for good storefront content, in priority order
-  const PRIORITY_CATEGORIES = [
-    'NEWS', 'NEWS English', 'USA ➾ News', 'UK | NEWS',
-    'SKY SPORTS', 'BT SPORT', 'ESPN', 'Bein Sports',
-    'MOVIES English', 'HOLLYWOOD MOVIES', '24/7 HOLLYWOOD MOVIES',
-    'KIDS', 'KIDS Cartoon', 'Cartoon Network',
-    'MUSIC', 'MUSIC English',
-    'DOCUMENTARIES', 'Discovery',
-    'ENTERTAINMENT', 'ENTERTAINMENT English',
-    'BBC', 'CNN', 'FOX',
-  ]
-
-  // Build a list of categories to pull from, starting with priority ones
+  // Build a list of categories to pull from
   const allCategories = await db.channel.findMany({
     where: {
       featured: true,
       name: { not: { contains: 'Welcome' } },
-      logo: { not: null },
     },
     select: { category: true },
+    distinct: ['category'],
   })
   const categorySet = new Set<string>(allCategories.map((c) => c.category))
 
-  // Ordered list: priority categories first (if they exist), then the rest
+  // Ordered list: major countries first, then the rest
+  const PRIORITY_PREFIXES = [
+    'United States', 'United Kingdom', 'Canada', 'Germany', 'France',
+    'Spain', 'Italy', 'Brazil', 'India', 'Australia', 'Japan', 'South Korea',
+    'Netherlands', 'Sweden', 'Mexico', 'Argentina',
+  ]
   const orderedCategories: string[] = []
-  for (const pc of PRIORITY_CATEGORIES) {
-    // Match case-insensitively
-    const match = Array.from(categorySet).find((c) => c.toLowerCase().includes(pc.toLowerCase()))
+  for (const prefix of PRIORITY_PREFIXES) {
+    const match = Array.from(categorySet).find((c) => c.startsWith(prefix))
     if (match && !orderedCategories.includes(match)) {
       orderedCategories.push(match)
     }
   }
-  // Add remaining categories
   for (const cat of categorySet) {
     if (!orderedCategories.includes(cat)) orderedCategories.push(cat)
   }
@@ -385,7 +375,6 @@ export async function getFeaturedChannels(limit: number = 24) {
         category,
         featured: true,
         name: { not: { contains: 'Welcome' } },
-        logo: { not: null },
       },
       take: 5,
       orderBy: { name: 'asc' },
@@ -418,7 +407,6 @@ export async function getFeaturedChannels(limit: number = 24) {
       where: {
         featured: true,
         name: { not: { contains: 'Welcome' } },
-        logo: { not: null },
         streamId: { notIn: Array.from(seenStreamIds) },
       },
       take: limit * 2,

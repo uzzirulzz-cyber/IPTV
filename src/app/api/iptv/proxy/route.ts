@@ -1,38 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildStreamUrl } from '@/lib/iptv'
+import { getChannelById } from '@/lib/indexing'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 /**
- * GET /api/iptv/proxy?stream_id=<id>&format=m3u8
+ * GET /api/iptv/proxy?stream_id=<id>
  *
- * Fetches the m3u8 playlist from the IPTV server (following redirects)
- * and rewrites all relative segment URLs to absolute URLs so HLS.js
- * can load them directly from the browser.
+ * Fetches the m3u8 playlist and rewrites all relative segment URLs to
+ * absolute URLs so HLS.js can load them directly from the browser.
  *
- * Without this proxy, HLS.js gets a 302 redirect to a backend server,
- * but the segment URLs in the playlist are relative (e.g. "/hls/abc/123.ts")
- * and HLS.js can't resolve them because it doesn't know the final base URL.
- *
- * The proxy also adds CORS-friendly headers and a proper Content-Type.
+ * Two sources:
+ *   1. iptv-org channels (streamId starts with "iptvorg_") — the streamUrl
+ *      is already an absolute HLS URL, we just fetch and rewrite.
+ *   2. Xtream Codes channels — we build a /live/<user>/<pass>/<id>.m3u8 URL
+ *      and follow redirects to get the final backend URL.
  */
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
   const streamId = searchParams.get('stream_id')
-  const format = (searchParams.get('format') as 'm3u8' | 'ts') || 'm3u8'
 
   if (!streamId) {
     return NextResponse.json({ error: 'stream_id is required' }, { status: 400 })
   }
 
-  const upstreamUrl = buildStreamUrl(streamId, format)
+  let upstreamUrl: string
+
+  // Look up the channel in the local index
+  const indexed = await getChannelById(streamId).catch(() => null)
+
+  if (indexed && indexed.streamUrl) {
+    // Use the stored stream URL directly (iptv-org channels have absolute URLs)
+    upstreamUrl = indexed.streamUrl
+  } else {
+    // Fall back to building an Xtream Codes URL
+    const format = (searchParams.get('format') as 'm3u8' | 'ts') || 'm3u8'
+    upstreamUrl = buildStreamUrl(streamId, format)
+  }
 
   try {
-    // Fetch the m3u8 with VLC User-Agent (bypasses Cloudflare)
+    // Fetch the m3u8 with a browser-like User-Agent
     const res = await fetch(upstreamUrl, {
       headers: {
-        'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         Accept: '*/*',
       },
       redirect: 'follow',
@@ -42,27 +53,17 @@ export async function GET(req: NextRequest) {
 
     if (!res.ok) {
       return NextResponse.json(
-        { error: `IPTV server returned HTTP ${res.status}` },
+        { error: `Stream server returned HTTP ${res.status}` },
         { status: 502 }
       )
     }
 
     const raw = await res.text()
 
-    // Check for IPTV server-side errors (some channels return JSON errors
-    // or plain-text "Cannot read" errors)
-    if (raw.includes('"error"') || raw.includes('"status":false')) {
+    // Validate that we got an actual M3U8 playlist
+    if (!raw.includes('#EXTM3U')) {
       return NextResponse.json(
-        { error: 'This channel is not available on the IPTV server' },
-        { status: 502 }
-      )
-    }
-
-    // "Cannot read /home/nxt/storage/streams/..." means the channel file
-    // doesn't exist on the IPTV server's backend
-    if (raw.includes('Cannot read') || !raw.includes('#EXTM3U')) {
-      return NextResponse.json(
-        { error: 'This channel is not available on the IPTV server' },
+        { error: 'This channel is not available' },
         { status: 502 }
       )
     }
@@ -88,7 +89,7 @@ export async function GET(req: NextRequest) {
         error:
           err instanceof Error
             ? err.message
-            : 'Failed to fetch stream from IPTV server',
+            : 'Failed to fetch stream',
       },
       { status: 502 }
     )
@@ -97,9 +98,6 @@ export async function GET(req: NextRequest) {
 
 /**
  * Rewrite all relative URLs in an M3U8 playlist to absolute URLs.
- *
- * M3U8 lines that are NOT comments (don't start with #) are URLs.
- * Also rewrite #EXT-X-KEY URI attributes if present.
  */
 function rewriteM3u8Urls(raw: string, baseUrl: string): string {
   const lines = raw.split(/\r?\n/)
@@ -110,21 +108,15 @@ function rewriteM3u8Urls(raw: string, baseUrl: string): string {
       const trimmed = line.trim()
       if (!trimmed) return line
 
-      // Comment line — may contain URI="..." attributes
       if (trimmed.startsWith('#')) {
         return rewriteUriAttributes(trimmed, base)
       }
 
-      // Non-comment line = segment URL
       return resolveUrl(trimmed, base)
     })
     .join('\n')
 }
 
-/**
- * Resolve a possibly-relative URL against the base URL.
- * If the URL is already absolute, return it unchanged.
- */
 function resolveUrl(url: string, base: URL): string {
   try {
     return new URL(url, base).href
@@ -133,9 +125,6 @@ function resolveUrl(url: string, base: URL): string {
   }
 }
 
-/**
- * Rewrite URI="..." attributes inside #EXT-X-KEY and #EXT-X-MAP lines.
- */
 function rewriteUriAttributes(line: string, base: URL): string {
   return line.replace(/URI="([^"]+)"/g, (_match, url) => {
     const resolved = resolveUrl(url, base)

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getCurrentAdmin } from '@/lib/auth'
-import { runIndex, getIndexStatus } from '@/lib/indexing'
+import { getIndexStatus } from '@/lib/indexing'
+import { runIptvOrgIndex } from '@/lib/iptv-org-index'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 300 // 5 minutes — indexing 15k channels takes time
+export const maxDuration = 300 // 5 minutes
 
 export async function POST() {
   const admin = await getCurrentAdmin()
@@ -20,8 +21,8 @@ export async function POST() {
     )
   }
 
-  // Run the index synchronously — this may take 30-90 seconds for 15k channels
-  const result = await runIndex()
+  // Run the iptv-org index (fetches from GitHub, parses, stores in MongoDB)
+  const result = await runIptvOrgIndex()
   return NextResponse.json(result)
 }
 
