@@ -131,6 +131,25 @@ export async function runOpplexIndex(): Promise<OpplexIndexResult> {
     const completedAt = new Date()
     const durationMs = Date.now() - startMs
 
+    // Auto-backup: save a snapshot of the channel list to ChannelBackup
+    const dateStr = completedAt.toISOString().split('T')[0]
+    const backupKey = `opplex_${dateStr}_${completedAt.getTime()}`
+    const channelsJson = JSON.stringify(channels)
+    try {
+      await db.channelBackup.create({
+        data: {
+          backupKey,
+          source: 'opplex',
+          totalChannels: channels.length,
+          totalCategories: categories.length,
+          channels: channelsJson,
+        },
+      })
+    } catch (err) {
+      // Backup failure shouldn't fail the index
+      console.warn('[backup] Failed to create backup:', err)
+    }
+
     await db.indexMeta.upsert({
       where: { key: 'last_index' },
       update: {

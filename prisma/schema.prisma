@@ -115,3 +115,17 @@ model ZapierBroadcast {
 
   @@index([sentAt])
 }
+
+/// Backup snapshot of the channel database
+model ChannelBackup {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  backupKey   String   @unique // e.g. "opplex_2026-07-06"
+  source      String   // "opplex" | "iptv-org"
+  totalChannels Int
+  totalCategories Int
+  channels    String   // JSON string of all channel objects
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([source])
+}
