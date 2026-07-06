@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getIndexStatus } from '@/lib/indexing'
-import { runIptvOrgIndex } from '@/lib/iptv-org-index'
+import { runOpplexIndex } from '@/lib/opplex-index'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Run the re-index
-  const result = await runIptvOrgIndex()
+  const result = await runOpplexIndex()
   return NextResponse.json(result)
 }
 
