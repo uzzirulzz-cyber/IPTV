@@ -239,21 +239,21 @@ export async function getIndexStatus(): Promise<IndexStatus> {
 
 /**
  * Get the list of all categories (with channel counts) from the local index.
+ * Uses MongoDB aggregation for efficiency instead of loading all channels.
  */
 export async function getCategoriesFromIndex(): Promise<
   { category: string; count: number }[]
 > {
-  // Group by category and count
-  const channels = await db.channel.findMany({
-    select: { category: true },
+  // Use Prisma's groupBy for efficient aggregation
+  const grouped = await db.channel.groupBy({
+    by: ['category'],
+    _count: { category: true },
+    orderBy: { _count: { category: 'desc' } },
   })
-  const counts = new Map<string, number>()
-  for (const ch of channels) {
-    counts.set(ch.category, (counts.get(ch.category) || 0) + 1)
-  }
-  return Array.from(counts.entries())
-    .map(([category, count]) => ({ category, count }))
-    .sort((a, b) => b.count - a.count)
+  return grouped.map((g) => ({
+    category: g.category,
+    count: g._count.category,
+  }))
 }
 
 /**
@@ -311,51 +311,136 @@ export async function getChannelsFromIndex(opts: {
 
 /**
  * Get featured channels for the home storefront.
- * Returns up to `limit` channels, preferring those marked as featured
- * and skipping "Welcome" placeholder channels.
+ *
+ * Picks DIVERSE channels from DIFFERENT categories so the storefront
+ * shows a mix of news, sports, movies, kids, music, etc. — not 24 tiles
+ * from the same "24/7 Movies" category.
+ *
+ * Strategy:
+ *   1. Get all featured categories (sorted by priority).
+ *   2. From each category, pick 1-2 channels with logos.
+ *   3. Rotate through categories until we have `limit` channels.
  */
 export async function getFeaturedChannels(limit: number = 24) {
-  // First try to get featured channels with logos, excluding placeholder names
-  let channels = await db.channel.findMany({
+  // Categories that make for good storefront content, in priority order
+  const PRIORITY_CATEGORIES = [
+    'NEWS', 'NEWS English', 'USA ➾ News', 'UK | NEWS',
+    'SKY SPORTS', 'BT SPORT', 'ESPN', 'Bein Sports',
+    'MOVIES English', 'HOLLYWOOD MOVIES', '24/7 HOLLYWOOD MOVIES',
+    'KIDS', 'KIDS Cartoon', 'Cartoon Network',
+    'MUSIC', 'MUSIC English',
+    'DOCUMENTARIES', 'Discovery',
+    'ENTERTAINMENT', 'ENTERTAINMENT English',
+    'BBC', 'CNN', 'FOX',
+  ]
+
+  // Build a list of categories to pull from, starting with priority ones
+  const allCategories = await db.channel.findMany({
     where: {
       featured: true,
       name: { not: { contains: 'Welcome' } },
       logo: { not: null },
     },
-    take: limit * 2, // over-fetch so we can dedupe logos
-    orderBy: { name: 'asc' },
+    select: { category: true },
   })
+  const categorySet = new Set<string>(allCategories.map((c) => c.category))
 
-  // Dedupe by name (keep first occurrence)
-  const seenNames = new Set<string>()
-  const deduped = channels.filter((c) => {
-    if (seenNames.has(c.name)) return false
-    seenNames.add(c.name)
-    return true
-  })
-
-  if (deduped.length >= limit) {
-    return deduped.slice(0, limit).map(toClientChannel)
+  // Ordered list: priority categories first (if they exist), then the rest
+  const orderedCategories: string[] = []
+  for (const pc of PRIORITY_CATEGORIES) {
+    // Match case-insensitively
+    const match = Array.from(categorySet).find((c) => c.toLowerCase().includes(pc.toLowerCase()))
+    if (match && !orderedCategories.includes(match)) {
+      orderedCategories.push(match)
+    }
+  }
+  // Add remaining categories
+  for (const cat of categorySet) {
+    if (!orderedCategories.includes(cat)) orderedCategories.push(cat)
   }
 
-  // Fall back to any channel with a logo
-  const more = await db.channel.findMany({
-    where: {
-      name: { not: { contains: 'Welcome' } },
-      logo: { not: null },
-    },
-    take: limit * 3,
-    orderBy: { name: 'asc' },
-  })
+  // Pick 1-2 channels from each category, rotating until we have enough
+  const result: Array<{
+    streamId: string
+    name: string
+    logo: string | null
+    category: string
+    streamUrl: string
+    streamFmt: string
+    featured: boolean
+  }> = []
+  const seenNames = new Set<string>()
+  const seenStreamIds = new Set<string>()
+  const perCategoryCount = new Map<string, number>()
+  const maxPerCategory = 2
 
-  const moreSeen = new Set<string>()
-  const moreDeduped = more.filter((c) => {
-    if (seenNames.has(c.name) || moreSeen.has(c.name)) return false
-    moreSeen.add(c.name)
-    return true
-  })
+  // Fetch channels category by category, picking the best ones
+  for (const category of orderedCategories) {
+    if (result.length >= limit) break
+    const count = perCategoryCount.get(category) || 0
+    if (count >= maxPerCategory) continue
 
-  return [...deduped, ...moreDeduped].slice(0, limit).map(toClientChannel)
+    const channels = await db.channel.findMany({
+      where: {
+        category,
+        featured: true,
+        name: { not: { contains: 'Welcome' } },
+        logo: { not: null },
+      },
+      take: 5,
+      orderBy: { name: 'asc' },
+    })
+
+    for (const ch of channels) {
+      if (result.length >= limit) break
+      if (seenNames.has(ch.name) || seenStreamIds.has(ch.streamId)) continue
+      const catCount = perCategoryCount.get(category) || 0
+      if (catCount >= maxPerCategory) break
+
+      result.push({
+        streamId: ch.streamId,
+        name: ch.name,
+        logo: ch.logo,
+        category: ch.category,
+        streamUrl: ch.streamUrl,
+        streamFmt: ch.streamFmt,
+        featured: ch.featured,
+      })
+      seenNames.add(ch.name)
+      seenStreamIds.add(ch.streamId)
+      perCategoryCount.set(category, catCount + 1)
+    }
+  }
+
+  // If we still don't have enough, fill with any featured channels
+  if (result.length < limit) {
+    const more = await db.channel.findMany({
+      where: {
+        featured: true,
+        name: { not: { contains: 'Welcome' } },
+        logo: { not: null },
+        streamId: { notIn: Array.from(seenStreamIds) },
+      },
+      take: limit * 2,
+      orderBy: { name: 'asc' },
+    })
+    for (const ch of more) {
+      if (result.length >= limit) break
+      if (seenNames.has(ch.name)) continue
+      result.push({
+        streamId: ch.streamId,
+        name: ch.name,
+        logo: ch.logo,
+        category: ch.category,
+        streamUrl: ch.streamUrl,
+        streamFmt: ch.streamFmt,
+        featured: ch.featured,
+      })
+      seenNames.add(ch.name)
+    }
+  }
+
+  return result.map(toClientChannel)
 }
 
 function toClientChannel(c: {

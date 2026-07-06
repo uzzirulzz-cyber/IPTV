@@ -34,7 +34,14 @@ import {
 import { toast } from 'sonner'
 
 interface AdminStats {
-  stats: { userCount: number; favoriteCount: number; historyCount: number }
+  stats: {
+    userCount: number
+    favoriteCount: number
+    historyCount: number
+    indexedChannels?: number
+    indexedCategories?: number
+    indexStatus?: string
+  }
   users: { id: string; email: string; name: string | null; avatar: string | null; createdAt: string }[]
 }
 
@@ -102,6 +109,7 @@ export function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [config, setConfig] = useState<IptvConfig | null>(null)
   const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null)
+  const [indexCategories, setIndexCategories] = useState<{ category: string; count: number }[]>([])
   const [indexing, setIndexing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -130,10 +138,17 @@ export function AdminDashboard() {
 
   const loadIndexStatus = async () => {
     try {
-      const res = await fetch('/api/index/status', { cache: 'no-store' })
-      if (!res.ok) throw new Error('Failed to load index status')
-      const data = await res.json()
-      setIndexStatus(data)
+      const [statusRes, catsRes] = await Promise.all([
+        fetch('/api/index/status', { cache: 'no-store' }),
+        fetch('/api/index/categories', { cache: 'no-store' }),
+      ])
+      if (statusRes.ok) {
+        setIndexStatus(await statusRes.json())
+      }
+      if (catsRes.ok) {
+        const catsData = await catsRes.json()
+        setIndexCategories(catsData.categories || [])
+      }
     } catch {
       // ignore
     }
@@ -252,7 +267,25 @@ export function AdminDashboard() {
 
           {/* Overview Tab */}
           <TabsContent value="overview">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Indexed Channels</CardTitle>
+                  <DatabaseIcon className="h-4 w-4 text-rose-400" />
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : (
+                    <>
+                      <div className="text-2xl md:text-3xl font-bold">
+                        {(stats?.stats.indexedChannels ?? indexStatus?.totalChannels ?? 0).toLocaleString()}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">In MongoDB Atlas</p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
@@ -263,7 +296,7 @@ export function AdminDashboard() {
                     <Skeleton className="h-8 w-16" />
                   ) : (
                     <>
-                      <div className="text-3xl font-bold">{stats?.stats.userCount ?? 0}</div>
+                      <div className="text-2xl md:text-3xl font-bold">{stats?.stats.userCount ?? 0}</div>
                       <p className="text-xs text-muted-foreground mt-1">Registered accounts</p>
                     </>
                   )}
@@ -279,7 +312,7 @@ export function AdminDashboard() {
                     <Skeleton className="h-8 w-16" />
                   ) : (
                     <>
-                      <div className="text-3xl font-bold">{stats?.stats.favoriteCount ?? 0}</div>
+                      <div className="text-2xl md:text-3xl font-bold">{stats?.stats.favoriteCount ?? 0}</div>
                       <p className="text-xs text-muted-foreground mt-1">Across all users</p>
                     </>
                   )}
@@ -295,7 +328,7 @@ export function AdminDashboard() {
                     <Skeleton className="h-8 w-16" />
                   ) : (
                     <>
-                      <div className="text-3xl font-bold">{stats?.stats.historyCount ?? 0}</div>
+                      <div className="text-2xl md:text-3xl font-bold">{stats?.stats.historyCount ?? 0}</div>
                       <p className="text-xs text-muted-foreground mt-1">Total watch records</p>
                     </>
                   )}
@@ -501,25 +534,30 @@ export function AdminDashboard() {
                 </CardContent>
               </Card>
 
-              {/* Quick Category Preview */}
+              {/* Quick Category Preview — from local MongoDB index */}
               {indexStatus?.status === 'success' && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Tv className="h-5 w-5 text-rose-400" />
-                      Top Categories
+                      Top Categories (from index)
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ScrollArea className="max-h-60">
-                      <div className="flex flex-wrap gap-2">
-                        {config?.categories?.slice(0, 30).map((cat) => (
-                          <Badge key={cat.category_id} variant="outline" className="font-normal">
-                            {cat.category_name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </ScrollArea>
+                    {indexCategories.length === 0 ? (
+                      <Skeleton className="h-20" />
+                    ) : (
+                      <ScrollArea className="max-h-60">
+                        <div className="flex flex-wrap gap-2">
+                          {indexCategories.slice(0, 40).map((cat) => (
+                            <Badge key={cat.category} variant="outline" className="font-normal gap-1.5">
+                              {cat.category}
+                              <span className="text-[10px] text-muted-foreground">{cat.count}</span>
+                            </Badge>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    )}
                   </CardContent>
                 </Card>
               )}
