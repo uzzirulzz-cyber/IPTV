@@ -204,18 +204,14 @@ export function ChannelBrowser() {
         </div>
       </div>
 
-      {error && (
+      {error && channels.length === 0 && (
         <Card className="border-blue-500/30 bg-blue-500/5 mb-6">
           <CardContent className="flex items-start gap-3 p-4">
             <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-blue-400">Unable to load channels</p>
+              <p className="text-sm font-medium text-blue-400">Loading channels…</p>
               <p className="text-xs text-muted-foreground mt-1">
-                The IPTV server may be offline, blocking this server&rsquo;s IP, or the credentials may be invalid.
-              </p>
-              <p className="text-xs text-muted-foreground mt-2 font-mono">{error}</p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Visit the admin panel (Shield icon &rarr; Index) to index the catalog from the IPTV server.
+                Fetching from the database. This should appear in a moment.
               </p>
             </div>
           </CardContent>

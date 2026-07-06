@@ -1,57 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCatalog, getLiveCategories } from '@/lib/iptv'
 import { getChannelsFromIndex, getCategoriesFromIndex, getIndexStatus } from '@/lib/indexing'
+import { db } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/iptv/catalog
  *
- * Returns channels + categories. Strategy:
- *   1. If a local index exists (admin ran "Index Now"), read from MongoDB
- *      for instant response.
- *   2. Otherwise, fall back to a live fetch from the IPTV server.
+ * Returns channels + categories from the LOCAL MongoDB index ONLY.
+ * Never falls back to the live IPTV server — that was causing
+ * "Unexpected end of JSON input" errors when the server was slow.
  *
  * Query params:
- *   - category_id: filter by category (live) or category name (index)
- *   - search: search by channel name (index only)
+ *   - category_id: filter by category name
+ *   - search: search by channel name
  *   - categories_only: 1 = return only the category list
- *   - source: "live" | "index" | "auto" (default: auto)
+ *   - limit: max channels to return (default 200, max 500)
+ *   - offset: pagination offset
  */
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
   const categoryId = searchParams.get('category_id') || undefined
   const search = searchParams.get('search') || undefined
   const categoriesOnly = searchParams.get('categories_only') === '1'
-  const source = (searchParams.get('source') || 'auto') as 'live' | 'index' | 'auto'
   const limit = Math.min(parseInt(searchParams.get('limit') || '200', 10), 500)
+  const offset = parseInt(searchParams.get('offset') || '0', 10)
 
-  // Check if we have a populated local index
-  const indexStatus = await getIndexStatus()
-  const hasIndex = indexStatus.status === 'success' && indexStatus.totalChannels > 0
-
-  // If caller explicitly wants live, or no index, use live fetch
-  if (source === 'live' || (source === 'auto' && !hasIndex)) {
-    try {
-      if (categoriesOnly) {
-        const categories = await getLiveCategories()
-        return NextResponse.json({ categories, source: 'live' })
-      }
-      const { categories, channels, error } = await getCatalog(categoryId)
-      return NextResponse.json({ categories, channels, error, source: 'live' })
-    } catch (err) {
-      return NextResponse.json(
-        {
-          error: err instanceof Error ? err.message : 'Failed to fetch IPTV catalog',
-          source: 'live',
-        },
-        { status: 502 }
-      )
-    }
-  }
-
-  // Otherwise, read from the local index
   try {
+    // Quick check: do we have any channels at all?
+    const channelCount = await db.channel.count()
+    if (channelCount === 0) {
+      return NextResponse.json({
+        categories: [],
+        channels: [],
+        total: 0,
+        source: 'index',
+        error: 'No channels indexed. Visit /admin → Index tab to index channels.',
+      })
+    }
+
     if (categoriesOnly) {
       const categories = await getCategoriesFromIndex()
       return NextResponse.json({
@@ -68,9 +55,9 @@ export async function GET(req: NextRequest) {
       category: categoryId,
       search,
       limit,
+      offset,
     })
 
-    // Also return the full category list for the sidebar
     const categories = await getCategoriesFromIndex()
 
     return NextResponse.json({
@@ -96,6 +83,9 @@ export async function GET(req: NextRequest) {
       {
         error: err instanceof Error ? err.message : 'Failed to read from index',
         source: 'index',
+        channels: [],
+        categories: [],
+        total: 0,
       },
       { status: 500 }
     )
