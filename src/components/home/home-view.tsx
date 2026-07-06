@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { useStorefrontRefresh } from '@/hooks/use-storefront-refresh'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Play, Radio, Tv, Heart, Clock, ArrowRight, Trash2, Flame, Zap } from 'lucide-react'
+import { Play, Radio, Tv, Heart, Clock, ArrowRight, Trash2, Flame, Zap, RefreshCw, Database } from 'lucide-react'
 import { toast } from 'sonner'
 import { ChannelLogo } from '@/components/channels/channel-logo'
 import { PlaybeatLogoLarge } from '@/components/layout/playbeat-logo'
@@ -79,11 +80,22 @@ function ChannelTile({ ch, onClick }: { ch: FeaturedChannel; onClick: () => void
 export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }) {
   const go = (path: string) => onNavigate ? onNavigate(path) : (window.location.href = path)
   const { user } = useAuth()
+  const { data: storefront, loading: loadingStorefront, refresh: refreshStorefront } = useStorefrontRefresh(60000)
   const [history, setHistory] = useState<WatchHistoryItem[]>([])
-  const [featured, setFeatured] = useState<FeaturedChannel[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
-  const [loadingFeatured, setLoadingFeatured] = useState(true)
   const [heroBg] = useState(() => HERO_BG_IMAGES[Math.floor(Math.random() * HERO_BG_IMAGES.length)])
+
+  // Featured channels come from the auto-refresh hook (updates every 60s)
+  const featured: FeaturedChannel[] = (storefront?.featured || []).map((c) => ({
+    streamId: c.streamId,
+    name: c.name,
+    logo: c.logo,
+    category: c.category,
+    streamUrl: c.streamUrl,
+    streamFormat: c.streamFormat,
+    featured: c.featured,
+  }))
+  const loadingFeatured = loadingStorefront
 
   const loadHistory = async () => {
     if (!user) {
@@ -102,22 +114,9 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
     }
   }
 
-  const loadFeatured = async () => {
-    try {
-      const res = await fetch('/api/index/featured?limit=24', { cache: 'no-store' })
-      const data = await res.json()
-      setFeatured(data.channels || [])
-    } catch {
-      setFeatured([])
-    } finally {
-      setLoadingFeatured(false)
-    }
-  }
-
   useEffect(() => {
     setLoadingHistory(true)
     loadHistory()
-    loadFeatured()
   }, [user])
 
   const clearHistory = async () => {
@@ -156,6 +155,27 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
             </span>
             Broadcasting active
           </Badge>
+          {/* Auto-update indicator */}
+          {storefront?.status && (
+            <div className="mb-4 flex items-center gap-2 text-xs text-white/60">
+              <Database className="h-3.5 w-3.5 text-cyan-400" />
+              <span>
+                {storefront.status.totalChannels.toLocaleString()} channels ·
+                Auto-updated {storefront.status.ageSeconds !== null
+                  ? storefront.status.ageSeconds < 60
+                    ? `${storefront.status.ageSeconds}s ago`
+                    : `${Math.round(storefront.status.ageSeconds / 60)}m ago`
+                  : 'never'}
+              </span>
+              <button
+                onClick={() => refreshStorefront()}
+                className="ml-1 text-cyan-400 hover:text-cyan-300 transition-colors"
+                title="Refresh now"
+              >
+                <RefreshCw className="h-3 w-3" />
+              </button>
+            </div>
+          )}
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight">
             Stream the world, <br />
             <span className="bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">
@@ -182,7 +202,11 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
                 <Tv className="h-4 w-4" />
               </div>
               <div>
-                <div className="font-semibold">15,000+</div>
+                <div className="font-semibold">
+                  {storefront?.status?.totalChannels
+                    ? storefront.status.totalChannels.toLocaleString()
+                    : '11,000+'}
+                </div>
                 <div className="text-xs text-muted-foreground">Live channels</div>
               </div>
             </div>
@@ -191,17 +215,19 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
                 <Zap className="h-4 w-4" />
               </div>
               <div>
-                <div className="font-semibold">460+</div>
+                <div className="font-semibold">
+                  {storefront?.status?.totalCategories || '140+'}
+                </div>
                 <div className="text-xs text-muted-foreground">Categories</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
-                <Flame className="h-4 w-4" />
+                <RefreshCw className="h-4 w-4" />
               </div>
               <div>
-                <div className="font-semibold">HLS + TS</div>
-                <div className="text-xs text-muted-foreground">Auto-recovery</div>
+                <div className="font-semibold">24/7</div>
+                <div className="text-xs text-muted-foreground">Auto-refresh</div>
               </div>
             </div>
           </div>
