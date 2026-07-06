@@ -155,27 +155,29 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
             </span>
             Broadcasting active
           </Badge>
-          {/* Auto-update indicator */}
-          {storefront?.status && (
-            <div className="mb-4 flex items-center gap-2 text-xs text-white/60">
-              <Database className="h-3.5 w-3.5 text-cyan-400" />
-              <span>
-                {storefront.status.totalChannels.toLocaleString()} channels ·
-                Auto-updated {storefront.status.ageSeconds !== null
-                  ? storefront.status.ageSeconds < 60
-                    ? `${storefront.status.ageSeconds}s ago`
-                    : `${Math.round(storefront.status.ageSeconds / 60)}m ago`
-                  : 'never'}
-              </span>
-              <button
-                onClick={() => refreshStorefront()}
-                className="ml-1 text-cyan-400 hover:text-cyan-300 transition-colors"
-                title="Refresh now"
-              >
-                <RefreshCw className="h-3 w-3" />
-              </button>
-            </div>
-          )}
+          {/* Auto-update indicator — always visible, shows loading state too */}
+          <div className="mb-4 flex items-center gap-2 text-xs text-white/60">
+            <Database className="h-3.5 w-3.5 text-cyan-400" />
+            <span>
+              {storefront?.status
+                ? <>
+                    {storefront.status.totalChannels.toLocaleString()} channels ·
+                    Auto-updated {storefront.status.ageSeconds !== null
+                      ? storefront.status.ageSeconds < 60
+                        ? `${storefront.status.ageSeconds}s ago`
+                        : `${Math.round(storefront.status.ageSeconds / 60)}m ago`
+                      : 'never'}
+                  </>
+                : 'Loading database…'}
+            </span>
+            <button
+              onClick={() => refreshStorefront()}
+              className="ml-1 text-cyan-400 hover:text-cyan-300 transition-colors"
+              title="Refresh now"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </button>
+          </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight">
             Stream the world, <br />
             <span className="bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">
@@ -216,7 +218,9 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
               </div>
               <div>
                 <div className="font-semibold">
-                  {storefront?.status?.totalCategories || '140+'}
+                  {storefront?.status?.totalCategories
+                    ? storefront.status.totalCategories.toLocaleString()
+                    : '127+'}
                 </div>
                 <div className="text-xs text-muted-foreground">Categories</div>
               </div>

@@ -3,11 +3,14 @@
 /**
  * Playbeat logo — stylized brand name matching the storefront reference.
  *
- * Letters are colored: P/L/A/Y silver, B/E red, A silver, T blue.
- * The "P" integrates a red play button triangle. A subtle 3D metallic
- * gradient is applied via CSS text gradients.
+ * Letters are colored with solid colors for maximum browser compatibility:
+ *   P/L/A/Y — silver/white (#e5e7eb)
+ *   B — red (#ef4444)
+ *   E — three red horizontal bars
+ *   A — silver/white
+ *   T — blue (#3b82f6)
  *
- * Two sizes: small (header) and large (home hero).
+ * The "P" integrates a red play button triangle.
  */
 
 interface PlaybeatLogoProps {
@@ -42,21 +45,13 @@ export function PlaybeatLogoLarge({ className = '' }: { className?: string }) {
 function LogoLetters({ size }: { size: 'sm' | 'lg' }) {
   const fontSize = size === 'sm' ? 'text-2xl md:text-3xl' : 'text-5xl md:text-7xl'
   const gap = size === 'sm' ? 'gap-0.5' : 'gap-1'
+  const shadow = size === 'sm' ? '0 1px 1px' : '0 2px 3px'
 
   return (
-    <div className={`flex items-end ${gap} leading-none`}>
+    <div className={`flex items-end ${gap} leading-none`} style={{ textShadow: `${shadow} rgba(0,0,0,0.5)` }}>
       {/* P — silver with play button */}
       <span className="relative inline-block">
-        <span
-          className={`font-black ${fontSize} tracking-tight`}
-          style={{
-            background: 'linear-gradient(180deg, #f5f5f5 0%, #c0c0c0 40%, #8a8a8a 70%, #d4d4d4 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))',
-          }}
-        >
+        <span className={`font-black ${fontSize} tracking-tight`} style={{ color: '#e5e7eb' }}>
           P
         </span>
         {/* Play button triangle inside the P */}
@@ -66,23 +61,22 @@ function LogoLetters({ size }: { size: 'sm' | 'lg' }) {
             borderTop: size === 'sm' ? '5px solid transparent' : '10px solid transparent',
             borderBottom: size === 'sm' ? '5px solid transparent' : '10px solid transparent',
             borderLeft: size === 'sm' ? '7px solid #ef4444' : '14px solid #ef4444',
-            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))',
           }}
           aria-hidden="true"
         />
       </span>
 
       {/* L — silver */}
-      <LetterGradient color="silver" size={fontSize}>L</LetterGradient>
+      <Letter color="#e5e7eb" size={fontSize}>L</Letter>
 
       {/* A — silver */}
-      <LetterGradient color="silver" size={fontSize}>A</LetterGradient>
+      <Letter color="#e5e7eb" size={fontSize}>A</Letter>
 
       {/* Y — silver */}
-      <LetterGradient color="silver" size={fontSize}>Y</LetterGradient>
+      <Letter color="#e5e7eb" size={fontSize}>Y</Letter>
 
       {/* B — red */}
-      <LetterGradient color="red" size={fontSize}>B</LetterGradient>
+      <Letter color="#ef4444" size={fontSize}>B</Letter>
 
       {/* E — red, styled as three horizontal bars */}
       <span className={`inline-flex flex-col justify-center ${size === 'sm' ? 'gap-[3px] mb-1' : 'gap-[5px] mb-2'} mx-1`}>
@@ -91,7 +85,7 @@ function LogoLetters({ size }: { size: 'sm' | 'lg' }) {
           style={{
             height: size === 'sm' ? '4px' : '8px',
             width: size === 'sm' ? '20px' : '40px',
-            background: 'linear-gradient(180deg, #ff6b6b, #dc2626)',
+            background: '#ef4444',
             boxShadow: '0 1px 2px rgba(0,0,0,0.4)',
           }}
         />
@@ -100,7 +94,7 @@ function LogoLetters({ size }: { size: 'sm' | 'lg' }) {
           style={{
             height: size === 'sm' ? '4px' : '8px',
             width: size === 'sm' ? '12px' : '26px',
-            background: 'linear-gradient(180deg, #ff6b6b, #dc2626)',
+            background: '#ef4444',
             boxShadow: '0 1px 2px rgba(0,0,0,0.4)',
           }}
         />
@@ -109,47 +103,32 @@ function LogoLetters({ size }: { size: 'sm' | 'lg' }) {
           style={{
             height: size === 'sm' ? '4px' : '8px',
             width: size === 'sm' ? '20px' : '40px',
-            background: 'linear-gradient(180deg, #ff6b6b, #dc2626)',
+            background: '#ef4444',
             boxShadow: '0 1px 2px rgba(0,0,0,0.4)',
           }}
         />
       </span>
 
       {/* A — silver */}
-      <LetterGradient color="silver" size={fontSize}>A</LetterGradient>
+      <Letter color="#e5e7eb" size={fontSize}>A</Letter>
 
       {/* T — blue */}
-      <LetterGradient color="blue" size={fontSize}>T</LetterGradient>
+      <Letter color="#3b82f6" size={fontSize}>T</Letter>
     </div>
   )
 }
 
-function LetterGradient({
+function Letter({
   children,
   color,
   size,
 }: {
   children: string
-  color: 'silver' | 'red' | 'blue'
+  color: string
   size: string
 }) {
-  const gradients = {
-    silver: 'linear-gradient(180deg, #f5f5f5 0%, #c0c0c0 40%, #8a8a8a 70%, #d4d4d4 100%)',
-    red: 'linear-gradient(180deg, #ff6b6b 0%, #ef4444 40%, #b91c1c 80%, #dc2626 100%)',
-    blue: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #1d4ed8 80%, #2563eb 100%)',
-  }
-
   return (
-    <span
-      className={`font-black ${size} tracking-tight mx-0.5`}
-      style={{
-        background: gradients[color],
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text',
-        filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))',
-      }}
-    >
+    <span className={`font-black ${size} tracking-tight mx-0.5`} style={{ color }}>
       {children}
     </span>
   )
