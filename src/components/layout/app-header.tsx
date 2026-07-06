@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Home, Tv, Heart, Shield, LogOut, User as UserIcon, Radio, Menu } from 'lucide-react'
 import { toast } from 'sonner'
+import { PlaybeatLogo } from './playbeat-logo'
 
 export function AppHeader() {
   const router = useRouter()
@@ -85,13 +86,7 @@ export function AppHeader() {
             onClick={() => navigate('/')}
             className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-500/20">
-              <Radio className="h-5 w-5" />
-            </div>
-            <div className="hidden sm:block text-left leading-tight">
-              <div className="text-base font-bold tracking-tight">Playbeat</div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Digital</div>
-            </div>
+            <PlaybeatLogo showTagline />
           </button>
           <Badge variant="outline" className="hidden md:flex gap-1.5 border-rose-500/30 bg-rose-500/10 text-rose-400">
             <span className="relative flex h-1.5 w-1.5">

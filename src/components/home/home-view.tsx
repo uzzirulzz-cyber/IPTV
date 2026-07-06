@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Play, Radio, Tv, Heart, Clock, ArrowRight, Trash2, Flame, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { ChannelLogo } from '@/components/channels/channel-logo'
+import { PlaybeatLogoLarge } from '@/components/layout/playbeat-logo'
 
 const HERO_BG_IMAGES = [
   '/bg/bg1.jpg',
@@ -144,6 +145,10 @@ export function HomeView({ onNavigate }: { onNavigate?: (path: string) => void }
         <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-rose-500/20 blur-3xl" aria-hidden="true" />
         <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" aria-hidden="true" />
         <div className="relative z-10 max-w-3xl">
+          {/* Large branded Playbeat logo */}
+          <div className="mb-6">
+            <PlaybeatLogoLarge />
+          </div>
           <Badge variant="outline" className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />

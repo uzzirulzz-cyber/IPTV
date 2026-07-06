@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { PlaybeatLogo } from './playbeat-logo'
 
 const BG_IMAGES = [
   '/bg/bg1.jpg',
@@ -39,17 +40,17 @@ export function AppFooter({ label = 'Live IPTV streaming' }: AppFooterProps) {
 
       {/* Footer content */}
       <div className="relative z-10 py-8 px-4 md:px-6">
-        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/80">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-white">Playbeat Digital</span>
-            <span className="text-white/40">·</span>
-            <span>{label}</span>
+        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <PlaybeatLogo showTagline />
+            <span className="text-white/40 text-xs">·</span>
+            <span className="text-xs text-white/80">{label}</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-white/50">Powered by MongoDB · HLS.js · Next.js</span>
+            <span className="text-white/50 text-xs">Powered by MongoDB · HLS.js · Next.js</span>
           </div>
         </div>
-        <div className="relative z-10 mt-3 text-center text-[10px] text-white/40">
+        <div className="relative z-10 mt-4 text-center text-[10px] text-white/40">
           © {new Date().getFullYear()} Playbeat Digital. All rights reserved.
         </div>
       </div>
