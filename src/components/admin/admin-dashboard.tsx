@@ -49,28 +49,15 @@ interface IptvConfig {
   health: {
     ok: boolean
     error?: string
-    user_info?: {
-      username: string
-      status: string
-      exp_date: string | null
-      active_cons: string
-      max_connections: string
-      is_trial: string
-      created_at: string
-    }
-    server_info?: {
-      url: string
-      port: string
-      https_port: string
-      server_protocol: string
-      rtmp_port: string
-      timezone: string
-      time_now: string
-    }
+    source?: string
+    totalChannels?: number
+    totalCategories?: number
+    lastUpdated?: string | null
+    ageSeconds?: number | null
   }
-  categories: { category_id: string; category_name: string }[]
+  categories: { category_id: string; category_name: string; count?: number }[]
   totalCategories: number
-  iptv: { url: string; username: string; hasPassword: boolean }
+  iptv: { url: string; username: string; hasPassword: boolean; source?: string }
   mongo: {
     full: string
     masked: string
@@ -360,30 +347,34 @@ export function AdminDashboard() {
                       <Skeleton className="h-4 w-48 mt-2" />
                     ) : config?.health.ok ? (
                       <>
-                        <p className="text-sm text-emerald-400 mt-1">Connected and streaming — broadcasting active</p>
+                        <p className="text-sm text-emerald-400 mt-1">Database connected — broadcasting active</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-xs">
                           <div>
-                            <div className="text-muted-foreground">Account Status</div>
-                            <div className="font-medium text-emerald-400">{config.health.user_info?.status || 'Active'}</div>
+                            <div className="text-muted-foreground">Source</div>
+                            <div className="font-medium text-emerald-400">iptv-org/iptv</div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Connections</div>
-                            <div className="font-medium">{config.health.user_info?.active_cons || '0'}/{config.health.user_info?.max_connections || '—'}</div>
+                            <div className="text-muted-foreground">Total Channels</div>
+                            <div className="font-medium">{(config.health.totalChannels || 0).toLocaleString()}</div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Expires</div>
-                            <div className="font-medium">{formatDate(config.health.user_info?.exp_date || null)}</div>
+                            <div className="text-muted-foreground">Categories</div>
+                            <div className="font-medium">{config.health.totalCategories || 0}</div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Indexed</div>
+                            <div className="text-muted-foreground">Last Updated</div>
                             <div className="font-medium">
-                              {indexStatus?.totalChannels.toLocaleString() || '0'} channels
+                              {config.health.ageSeconds !== null
+                                ? config.health.ageSeconds < 60
+                                  ? `${config.health.ageSeconds}s ago`
+                                  : `${Math.round(config.health.ageSeconds / 60)}m ago`
+                                : '—'}
                             </div>
                           </div>
                         </div>
                       </>
                     ) : (
-                      <p className="text-sm text-rose-400 mt-1">{config?.health.error || 'Service unreachable'}</p>
+                      <p className="text-sm text-rose-400 mt-1">{config?.health?.error || 'Database not indexed — click the Index tab to start'}</p>
                     )}
                   </div>
                 </div>
@@ -621,13 +612,13 @@ export function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Server Tab */}
+          {/* Server Tab — now shows iptv-org database info */}
           <TabsContent value="server">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Server className="h-5 w-5 text-rose-400" />
-                  IPTV Server Information
+                  Channel Database Source
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -637,76 +628,80 @@ export function AdminDashboard() {
                       <Skeleton key={i} className="h-20" />
                     ))}
                   </div>
-                ) : config.health.ok && config.health.server_info ? (
+                ) : config.health.ok ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2">
                           <Globe className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Server URL</span>
+                          <span className="text-sm text-muted-foreground">Source</span>
                         </div>
-                        <span className="text-sm font-medium font-mono">{config.health.server_info.url}</span>
+                        <span className="text-sm font-medium">iptv-org/iptv</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2">
-                          <Server className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">HTTP Port</span>
+                          <DatabaseIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Repository</span>
                         </div>
-                        <span className="text-sm font-medium font-mono">{config.health.server_info.port}</span>
+                        <span className="text-sm font-medium font-mono">github.com/iptv-org/iptv</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2">
-                          <Lock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">HTTPS Port</span>
+                          <Tv className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Total Channels</span>
                         </div>
-                        <span className="text-sm font-medium font-mono">{config.health.server_info.https_port}</span>
+                        <span className="text-sm font-medium">{(config.health.totalChannels || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2">
-                          <Server className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">RTMP Port</span>
+                          <Zap className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Categories</span>
                         </div>
-                        <span className="text-sm font-medium font-mono">{config.health.server_info.rtmp_port}</span>
+                        <span className="text-sm font-medium">{config.health.totalCategories || 0}</span>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2">
-                          <Zap className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Protocol</span>
+                          <Lock className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Auth Required</span>
                         </div>
-                        <span className="text-sm font-medium uppercase">{config.health.server_info.server_protocol}</span>
+                        <span className="text-sm font-medium text-emerald-400">No (public)</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2">
                           <Globe className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Timezone</span>
+                          <span className="text-sm text-muted-foreground">Stream Format</span>
                         </div>
-                        <span className="text-sm font-medium">{config.health.server_info.timezone}</span>
+                        <span className="text-sm font-medium">HLS (m3u8)</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Server Time</span>
+                          <span className="text-sm text-muted-foreground">Last Indexed</span>
                         </div>
-                        <span className="text-sm font-medium">{config.health.server_info.time_now}</span>
+                        <span className="text-sm font-medium">
+                          {config.health.ageSeconds !== null
+                            ? config.health.ageSeconds < 60
+                              ? `${config.health.ageSeconds}s ago`
+                              : `${Math.round(config.health.ageSeconds / 60)}m ago`
+                            : '—'}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Active Connections</span>
+                          <RefreshCcw className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Auto-Refresh</span>
                         </div>
-                        <span className="text-sm font-medium">
-                          {config.health.user_info?.active_cons || '0'} / {config.health.user_info?.max_connections || '—'}
-                        </span>
+                        <span className="text-sm font-medium text-emerald-400">Every 6 hours</span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <XCircle className="h-10 w-10 text-rose-400 mb-3" />
-                    <p className="text-sm font-medium">Server unreachable</p>
-                    <p className="text-xs text-muted-foreground mt-1">{config.health.error}</p>
+                    <p className="text-sm font-medium">Database not indexed</p>
+                    <p className="text-xs text-muted-foreground mt-1">{config.health.error || 'Click the Index tab to start indexing'}</p>
                   </div>
                 )}
               </CardContent>
