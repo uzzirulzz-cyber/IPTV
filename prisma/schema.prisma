@@ -1,0 +1,62 @@
+// Prisma schema for Playbeat Digital - MongoDB backend
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites     Favorite[]
+  watchHistory  WatchHistory[]
+}
+
+model Favorite {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  channelId    String
+  channelName  String
+  channelLogo  String?
+  category     String?
+  streamUrl    String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, channelId])
+  @@index([userId])
+}
+
+model WatchHistory {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  channelId    String
+  channelName  String
+  channelLogo  String?
+  category     String?
+  streamUrl    String?
+  watchedAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, channelId])
+  @@index([userId])
+}
+
+model AdminSession {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  token     String   @unique
+  email     String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
