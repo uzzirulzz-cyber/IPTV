@@ -94,7 +94,10 @@ export function ChannelBrowser() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load channels')
-      if (!append) toast.error('Failed to load channels — check your IPTV credentials')
+      // Only show toast on actual fetch failures, not on initial load race conditions
+      if (!append && channels.length === 0) {
+        toast.error('Failed to load channels — check your IPTV credentials')
+      }
     } finally {
       setLoading(false)
       setLoadingMore(false)
