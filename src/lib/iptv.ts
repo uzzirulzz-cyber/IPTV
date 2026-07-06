@@ -4,6 +4,10 @@
  * live channels (streams), and server info.
  *
  * All requests are server-side only — never expose IPTV_PASSWORD to the client.
+ *
+ * NOTE: Some IPTV servers (e.g. those behind Cloudflare) block requests
+ * with default Node/fetch User-Agent strings. We use a VLC User-Agent
+ * which is whitelisted by most IPTV providers.
  */
 
 export interface IptvCategory {
@@ -23,9 +27,9 @@ export interface IptvChannel {
   is_adult: string
   category_id: string
   custom_sid: string
-  tv_archive: number
   direct_source: string
-  tv_archive_duration: number
+  tv_archive: number
+  direct_source_url?: string
 }
 
 export interface IptvServerInfo {
@@ -58,6 +62,16 @@ export interface IptvAuthResult {
   server_info: IptvServerInfo
 }
 
+/** A channel parsed from the M3U playlist. */
+export interface M3uChannel {
+  streamId: string
+  name: string
+  logo: string
+  category: string
+  streamUrl: string
+  streamFormat: 'm3u8' | 'ts' | 'other'
+}
+
 function getCredentials() {
   const url = process.env.IPTV_URL || ''
   const username = process.env.IPTV_USERNAME || ''
@@ -65,10 +79,13 @@ function getCredentials() {
   return { url: url.replace(/\/$/, ''), username, password }
 }
 
+/**
+ * VLC User-Agent — most IPTV servers whitelist this.
+ * Default Node/fetch UA is blocked by Cloudflare on many providers.
+ */
 const DEFAULT_HEADERS: HeadersInit = {
   Accept: 'application/json, text/plain, */*',
-  'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
 }
 
 function buildAuthUrl(action: string, params: Record<string, string | number> = {}) {
@@ -104,7 +121,6 @@ export async function getAuthInfo(): Promise<IptvAuthResult | null> {
   const res = await fetch(endpoint, {
     method: 'GET',
     headers: DEFAULT_HEADERS,
-    // Server-side fetch with a generous timeout for slow IPTV servers
     signal: AbortSignal.timeout(15000),
     cache: 'no-store',
   })
@@ -150,8 +166,94 @@ export async function getLiveStreams(categoryId?: string): Promise<IptvChannel[]
 }
 
 /**
+ * Fetch the full M3U playlist from get.php.
+ * This endpoint is more reliable than player_api.php for some providers
+ * and returns ALL channels (live + VOD + series) in M3U format.
+ *
+ * We filter to only live channels (URLs containing /live/ or non-/movie/ paths).
+ */
+export async function getM3uPlaylist(): Promise<{ channels: M3uChannel[]; raw: string }> {
+  const { url, username, password } = getCredentials()
+  const endpoint = `${url}/get.php?username=${username}&password=${password}&type=m3u_plus&output=ts`
+  const res = await fetch(endpoint, {
+    headers: DEFAULT_HEADERS,
+    signal: AbortSignal.timeout(60000),
+    cache: 'no-store',
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to fetch M3U playlist: HTTP ${res.status}`)
+  }
+  const raw = await res.text()
+  const channels = parseM3uPlaylist(raw)
+  return { channels, raw }
+}
+
+/**
+ * Parse an M3U playlist into a list of channels.
+ *
+ * Format:
+ *   #EXTM3U
+ *   #EXTINF:-1 tvg-id="..." tvg-name="..." tvg-logo="..." group-title="...",Channel Name
+ *   http://server/user/pass/streamId
+ */
+export function parseM3uPlaylist(raw: string): M3uChannel[] {
+  const lines = raw.split(/\r?\n/)
+  const channels: M3uChannel[] = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (!line.startsWith('#EXTINF')) continue
+
+    // Parse attributes from the EXTINF line
+    const tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/)
+    const groupTitleMatch = line.match(/group-title="([^"]*)"/)
+    const tvgNameMatch = line.match(/tvg-name="([^"]*)"/)
+
+    // Channel name is everything after the last comma
+    const commaIdx = line.lastIndexOf(',')
+    const name = commaIdx >= 0 ? line.slice(commaIdx + 1).trim() : (tvgNameMatch?.[1] || 'Unknown')
+
+    // Stream URL is the next non-empty, non-# line
+    let streamUrl = ''
+    for (let j = i + 1; j < lines.length; j++) {
+      const nextLine = lines[j].trim()
+      if (!nextLine) continue
+      if (nextLine.startsWith('#')) continue
+      streamUrl = nextLine
+      i = j
+      break
+    }
+    if (!streamUrl) continue
+
+    // Extract stream ID from URL (last path segment)
+    const urlMatch = streamUrl.match(/\/([^/]+)(?:\.\w+)?$/)
+    const streamId = urlMatch ? urlMatch[1] : ''
+
+    // Determine format and whether this is a live channel
+    // Live: /live/user/pass/id.m3u8 OR plain /user/pass/id (no /movie/ or /series/)
+    const isMovie = streamUrl.includes('/movie/')
+    const isSeries = streamUrl.includes('/series/')
+    if (isMovie || isSeries) continue // skip VOD
+
+    let streamFormat: 'm3u8' | 'ts' | 'other' = 'other'
+    if (streamUrl.endsWith('.m3u8')) streamFormat = 'm3u8'
+    else if (streamUrl.endsWith('.ts')) streamFormat = 'ts'
+
+    channels.push({
+      streamId,
+      name,
+      logo: tvgLogoMatch?.[1] || '',
+      category: groupTitleMatch?.[1] || 'Uncategorized',
+      streamUrl,
+      streamFormat,
+    })
+  }
+
+  return channels
+}
+
+/**
  * Get both categories and channels (with optional category filter).
- * Returns them grouped together for the channel browser.
  * Also returns an `error` field if the IPTV service is unreachable.
  */
 export async function getCatalog(categoryId?: string) {

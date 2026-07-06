@@ -25,6 +25,11 @@ import {
   Lock,
   Activity,
   Zap,
+  Database as DatabaseIcon,
+  Play,
+  Loader2,
+  RefreshCcw,
+  Radio,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -83,10 +88,21 @@ function formatDate(ts: string | null | number): string {
   return new Date(num * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+interface IndexStatus {
+  status: 'idle' | 'running' | 'success' | 'error' | 'never'
+  totalChannels: number
+  totalCategories: number
+  error: string | null
+  startedAt: string | null
+  completedAt: string | null
+}
+
 export function AdminDashboard() {
   const { setView } = useAppStore()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [config, setConfig] = useState<IptvConfig | null>(null)
+  const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null)
+  const [indexing, setIndexing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -112,9 +128,20 @@ export function AdminDashboard() {
     }
   }
 
+  const loadIndexStatus = async () => {
+    try {
+      const res = await fetch('/api/index/status', { cache: 'no-store' })
+      if (!res.ok) throw new Error('Failed to load index status')
+      const data = await res.json()
+      setIndexStatus(data)
+    } catch {
+      // ignore
+    }
+  }
+
   const loadAll = async () => {
     setLoading(true)
-    await Promise.all([loadStats(), loadConfig()])
+    await Promise.all([loadStats(), loadConfig(), loadIndexStatus()])
     setLoading(false)
   }
 
@@ -128,6 +155,39 @@ export function AdminDashboard() {
     toast.success('Refreshed')
     setRefreshing(false)
   }
+
+  const handleIndex = async () => {
+    if (indexing) return
+    if (indexStatus?.status === 'running') {
+      toast.info('Indexing is already in progress')
+      return
+    }
+    setIndexing(true)
+    toast.info('Indexing started — this may take 1-2 minutes for 15k channels')
+    try {
+      const res = await fetch('/api/admin/index', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Indexing failed')
+      if (data.ok) {
+        toast.success(`Indexed ${data.totalChannels.toLocaleString()} channels in ${data.totalCategories} categories (${(data.durationMs / 1000).toFixed(1)}s)`)
+      } else {
+        toast.error(`Indexing failed: ${data.error}`)
+      }
+      await loadIndexStatus()
+      await loadStats()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Indexing failed')
+    } finally {
+      setIndexing(false)
+    }
+  }
+
+  // Poll index status while running
+  useEffect(() => {
+    if (indexStatus?.status !== 'running') return
+    const interval = setInterval(loadIndexStatus, 5000)
+    return () => clearInterval(interval)
+  }, [indexStatus?.status])
 
   const handleSignOut = async () => {
     await fetch('/api/admin/signout', { method: 'POST' })
@@ -169,9 +229,15 @@ export function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:w-auto lg:grid-flow-col">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-auto lg:grid-flow-col">
             <TabsTrigger value="overview" className="gap-1.5">
               <Activity className="h-4 w-4" /> Overview
+            </TabsTrigger>
+            <TabsTrigger value="index" className="gap-1.5">
+              <DatabaseIcon className="h-4 w-4" /> Index
+              {indexStatus?.status === 'running' && (
+                <Loader2 className="h-3 w-3 animate-spin text-rose-400" />
+              )}
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-1.5">
               <Users className="h-4 w-4" /> Users
@@ -245,16 +311,27 @@ export function AdminDashboard() {
                     {config?.health.ok ? <CheckCircle2 className="h-6 w-6" /> : <XCircle className="h-6 w-6" />}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold">IPTV Service Status</h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">Broadcasting Status</h3>
+                      {config?.health.ok && (
+                        <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 gap-1.5">
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          </span>
+                          LIVE
+                        </Badge>
+                      )}
+                    </div>
                     {loading ? (
                       <Skeleton className="h-4 w-48 mt-2" />
                     ) : config?.health.ok ? (
                       <>
-                        <p className="text-sm text-emerald-400 mt-1">Connected and streaming</p>
+                        <p className="text-sm text-emerald-400 mt-1">Connected and streaming — broadcasting active</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-xs">
                           <div>
-                            <div className="text-muted-foreground">Status</div>
-                            <div className="font-medium">{config.health.user_info?.status || 'Active'}</div>
+                            <div className="text-muted-foreground">Account Status</div>
+                            <div className="font-medium text-emerald-400">{config.health.user_info?.status || 'Active'}</div>
                           </div>
                           <div>
                             <div className="text-muted-foreground">Connections</div>
@@ -265,8 +342,10 @@ export function AdminDashboard() {
                             <div className="font-medium">{formatDate(config.health.user_info?.exp_date || null)}</div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Categories</div>
-                            <div className="font-medium">{config.totalCategories}</div>
+                            <div className="text-muted-foreground">Indexed</div>
+                            <div className="font-medium">
+                              {indexStatus?.totalChannels.toLocaleString() || '0'} channels
+                            </div>
                           </div>
                         </div>
                       </>
@@ -277,6 +356,174 @@ export function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Index Tab */}
+          <TabsContent value="index">
+            <div className="space-y-4">
+              {/* Index Status Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DatabaseIcon className="h-5 w-5 text-rose-400" />
+                    Channel Catalog Index
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!indexStatus ? (
+                    <Skeleton className="h-32" />
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Status banner */}
+                      <div
+                        className={`flex items-start gap-3 p-4 rounded-lg border ${
+                          indexStatus.status === 'success'
+                            ? 'border-emerald-500/30 bg-emerald-500/5'
+                            : indexStatus.status === 'running'
+                            ? 'border-amber-500/30 bg-amber-500/5'
+                            : indexStatus.status === 'error'
+                            ? 'border-rose-500/30 bg-rose-500/5'
+                            : 'border-border/40 bg-muted/30'
+                        }`}
+                      >
+                        {indexStatus.status === 'success' ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+                        ) : indexStatus.status === 'running' ? (
+                          <Loader2 className="h-5 w-5 text-amber-400 mt-0.5 shrink-0 animate-spin" />
+                        ) : indexStatus.status === 'error' ? (
+                          <XCircle className="h-5 w-5 text-rose-400 mt-0.5 shrink-0" />
+                        ) : (
+                          <DatabaseIcon className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">
+                            {indexStatus.status === 'success' && 'Index ready — broadcasting active'}
+                            {indexStatus.status === 'running' && 'Indexing in progress…'}
+                            {indexStatus.status === 'error' && 'Indexing failed'}
+                            {indexStatus.status === 'idle' && 'Index idle'}
+                            {indexStatus.status === 'never' && 'No index yet — click "Index Now" to start'}
+                          </p>
+                          {indexStatus.error && (
+                            <p className="text-xs text-rose-400 mt-1 font-mono">{indexStatus.error}</p>
+                          )}
+                          {indexStatus.completedAt && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Last indexed: {new Date(indexStatus.completedAt).toLocaleString()}
+                            </p>
+                          )}
+                          {indexStatus.status === 'running' && indexStatus.startedAt && (
+                            <p className="text-xs text-amber-400 mt-1">
+                              Started: {new Date(indexStatus.startedAt).toLocaleString()} — please wait…
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Stats grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <div className="text-xs text-muted-foreground">Indexed Channels</div>
+                          <div className="text-xl font-bold mt-1">
+                            {indexStatus.totalChannels.toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <div className="text-xs text-muted-foreground">Categories</div>
+                          <div className="text-xl font-bold mt-1">
+                            {indexStatus.totalCategories.toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <div className="text-xs text-muted-foreground">IPTV Status</div>
+                          <div className="text-sm font-medium mt-1 flex items-center gap-1.5">
+                            {config?.health.ok ? (
+                              <>
+                                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                                <span className="text-emerald-400">Connected</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="h-2 w-2 rounded-full bg-rose-400" />
+                                <span className="text-rose-400">Offline</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <div className="text-xs text-muted-foreground">Source</div>
+                          <div className="text-sm font-medium mt-1">
+                            {indexStatus.status === 'success' ? 'MongoDB Atlas' : '—'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          onClick={handleIndex}
+                          disabled={indexing || indexStatus.status === 'running'}
+                          className="gap-2"
+                        >
+                          {indexing || indexStatus.status === 'running' ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Indexing…
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCcw className="h-4 w-4" />
+                              {indexStatus.status === 'never' ? 'Index Now' : 'Re-index'}
+                            </>
+                          )}
+                        </Button>
+                        <Button variant="outline" onClick={loadIndexStatus} className="gap-2">
+                          <RefreshCw className="h-4 w-4" />
+                          Check Status
+                        </Button>
+                      </div>
+
+                      {/* How it works */}
+                      <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Radio className="h-4 w-4 text-rose-400" />
+                          <h4 className="text-sm font-semibold">How indexing works</h4>
+                        </div>
+                        <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4">
+                          <li>Fetches the full M3U playlist from the IPTV server (15,000+ channels)</li>
+                          <li>Parses channel names, logos, categories, and stream URLs</li>
+                          <li>Stores everything in MongoDB Atlas for instant local access</li>
+                          <li>The home storefront and channels browser read from the local index</li>
+                          <li>Re-index when the IPTV provider adds or removes channels</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Quick Category Preview */}
+              {indexStatus?.status === 'success' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Tv className="h-5 w-5 text-rose-400" />
+                      Top Categories
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="max-h-60">
+                      <div className="flex flex-wrap gap-2">
+                        {config?.categories?.slice(0, 30).map((cat) => (
+                          <Badge key={cat.category_id} variant="outline" className="font-normal">
+                            {cat.category_name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
 
           {/* Users Tab */}

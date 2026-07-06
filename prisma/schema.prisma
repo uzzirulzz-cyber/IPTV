@@ -60,3 +60,36 @@ model AdminSession {
   createdAt DateTime @default(now())
   expiresAt DateTime
 }
+
+/// Indexed channel from the IPTV M3U playlist.
+/// Populated by the admin "Index Now" action.
+model Channel {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  streamId   String   @unique
+  name       String
+  logo       String?
+  category   String
+  streamUrl  String
+  streamFmt  String   @default("ts") // "m3u8" | "ts" | "other"
+  featured   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([category])
+  @@index([featured])
+  @@index([name])
+}
+
+/// Metadata about the last indexing run.
+model IndexMeta {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  key         String   @unique // "last_index"
+  totalChannels Int    @default(0)
+  totalCategories Int  @default(0)
+  status      String   @default("idle") // "idle" | "running" | "success" | "error"
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

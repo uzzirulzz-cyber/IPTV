@@ -31,6 +31,7 @@ export function VideoPlayer() {
   const recoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null)
+  const [streamFormat, setStreamFormat] = useState<string>('m3u8')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
@@ -54,11 +55,13 @@ export function VideoPlayer() {
     setLoadStartTime(Date.now())
     ;(async () => {
       try {
+        // Try m3u8 first, then fall back to ts
         const res = await fetch(`/api/iptv/stream?stream_id=${activeChannel.channelId}&format=m3u8`, { cache: 'no-store' })
         const data = await res.json()
         if (cancelled) return
         if (!res.ok) throw new Error(data.error || 'Failed to get stream URL')
         setStreamUrl(data.url)
+        setStreamFormat(data.format || 'm3u8')
       } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : 'Failed to load stream')
@@ -85,15 +88,47 @@ export function VideoPlayer() {
     }).catch(() => {})
   }, [activeChannel])
 
-  // Initialize HLS.js
-  const initHls = useCallback((url: string) => {
+  // Initialize HLS.js or direct video for TS streams
+  const initPlayer = useCallback((url: string, format: string) => {
     const video = videoRef.current
     if (!video) return
 
-    // Cleanup previous instance
+    // Cleanup previous HLS instance
     if (hlsRef.current) {
       hlsRef.current.destroy()
       hlsRef.current = null
+    }
+
+    // TS streams — play directly via the video element (MPEG-TS is natively
+    // supported by most browsers via the video tag with proper MIME).
+    // If direct playback fails, we fall back to HLS by rewriting the URL.
+    if (format === 'ts' || url.endsWith('.ts') || (!url.endsWith('.m3u8') && !url.includes('.m3u8'))) {
+      video.src = url
+      video.addEventListener(
+        'loadedmetadata',
+        () => {
+          setLoading(false)
+          setError(null)
+          video.play().catch((err) => console.warn('Auto-play blocked:', err))
+        },
+        { once: true }
+      )
+      video.addEventListener(
+        'error',
+        () => {
+          // TS direct playback failed — try building an m3u8 URL as fallback
+          console.warn('TS playback failed, trying m3u8 fallback')
+          const m3u8Url = url.replace(/\.ts$/, '.m3u8')
+          if (m3u8Url !== url) {
+            initPlayer(m3u8Url, 'm3u8')
+          } else {
+            setError('Unable to play this stream format')
+            setLoading(false)
+          }
+        },
+        { once: true }
+      )
+      return
     }
 
     // Native HLS (Safari)
@@ -209,7 +244,7 @@ export function VideoPlayer() {
     if (!streamUrl || !videoRef.current) return
     recoveryAttempts.current = 0
     setLoading(true)
-    initHls(streamUrl)
+    initPlayer(streamUrl, streamFormat)
 
     return () => {
       if (hlsRef.current) {
@@ -220,7 +255,7 @@ export function VideoPlayer() {
         clearTimeout(recoveryTimerRef.current)
       }
     }
-  }, [streamUrl, initHls])
+  }, [streamUrl, streamFormat, initPlayer])
 
   // Video event listeners
   useEffect(() => {
@@ -317,7 +352,7 @@ export function VideoPlayer() {
     setError(null)
     setLoading(true)
     recoveryAttempts.current = 0
-    if (streamUrl) initHls(streamUrl)
+    if (streamUrl) initPlayer(streamUrl, streamFormat)
   }
 
   if (!activeChannel) {

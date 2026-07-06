@@ -30,51 +30,25 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files — never commit secrets
-.env
-.env.*
-!.env.example
+# env files (can opt-in for committing if needed)
+.env*
 
 # vercel
 .vercel
+
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 local-*
-
-# IDE / editor
-.vscode/
-.idea/
-
-# internal / runtime
 .claude
 .z-ai-config
-.zscripts/dev.pid
 *.log
 dev.log
 dev.out.log
-server.log
 test
 prompt
 
-# databases (local SQLite fallback — we use MongoDB Atlas)
-/db/
-
-# uploaded user data (private conversation history)
-/upload/
-
-# internal tool results
-/tool-results/
-
-# Skills directory (AI tooling, not part of the app)
+server.log
+# Skills directory
 /skills/
-
-# scaffold examples (not part of Playbeat)
-/examples/
-
-# empty mini-services dir
-/mini-services/
-
-# worklog (internal agent notes)
-worklog.md

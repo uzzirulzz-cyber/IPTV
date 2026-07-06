@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Play, Radio, Tv, Heart, Clock, ArrowRight, Trash2 } from 'lucide-react'
+import { Play, Radio, Tv, Heart, Clock, ArrowRight, Trash2, Flame, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface WatchHistoryItem {
@@ -17,6 +17,16 @@ interface WatchHistoryItem {
   channelLogo: string | null
   category: string | null
   watchedAt: string
+}
+
+interface FeaturedChannel {
+  streamId: string
+  name: string
+  logo: string
+  category: string
+  streamUrl: string
+  streamFormat: string
+  featured: boolean
 }
 
 function timeAgo(iso: string): string {
@@ -30,16 +40,50 @@ function timeAgo(iso: string): string {
   return `${days}d ago`
 }
 
+function ChannelTile({ ch, onClick }: { ch: FeaturedChannel; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group relative aspect-video overflow-hidden rounded-xl border border-border/40 bg-card hover:border-rose-500/40 transition-all"
+    >
+      <div className="absolute inset-0 flex items-center justify-center p-3">
+        {ch.logo ? (
+          <img
+            src={ch.logo}
+            alt={ch.name}
+            className="max-h-12 max-w-full object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+            onError={(e) => {
+              ;(e.target as HTMLImageElement).style.display = 'none'
+            }}
+          />
+        ) : (
+          <Tv className="h-8 w-8 text-muted-foreground" />
+        )}
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/0" />
+      <div className="absolute bottom-0 left-0 right-0 p-2">
+        <div className="text-xs font-medium text-white line-clamp-1">{ch.name}</div>
+        <div className="text-[10px] text-white/60 line-clamp-1">{ch.category}</div>
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+        <Play className="h-8 w-8 text-white fill-white" />
+      </div>
+    </button>
+  )
+}
+
 export function HomeView() {
   const { setView, openChannel } = useAppStore()
   const { user } = useAuth()
   const [history, setHistory] = useState<WatchHistoryItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [featured, setFeatured] = useState<FeaturedChannel[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(true)
+  const [loadingFeatured, setLoadingFeatured] = useState(true)
 
   const loadHistory = async () => {
     if (!user) {
       setHistory([])
-      setLoading(false)
+      setLoadingHistory(false)
       return
     }
     try {
@@ -49,13 +93,26 @@ export function HomeView() {
     } catch {
       setHistory([])
     } finally {
-      setLoading(false)
+      setLoadingHistory(false)
+    }
+  }
+
+  const loadFeatured = async () => {
+    try {
+      const res = await fetch('/api/index/featured?limit=24', { cache: 'no-store' })
+      const data = await res.json()
+      setFeatured(data.channels || [])
+    } catch {
+      setFeatured([])
+    } finally {
+      setLoadingFeatured(false)
     }
   }
 
   useEffect(() => {
-    setLoading(true)
+    setLoadingHistory(true)
     loadHistory()
+    loadFeatured()
   }, [user])
 
   const clearHistory = async () => {
@@ -75,12 +132,12 @@ export function HomeView() {
         <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-rose-500/10 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
         <div className="relative z-10 max-w-3xl">
-          <Badge variant="outline" className="mb-4 gap-1.5 border-rose-500/30 bg-rose-500/10 text-rose-400">
+          <Badge variant="outline" className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
             </span>
-            Live broadcasting
+            Broadcasting active
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight">
             Stream the world, <br />
@@ -89,7 +146,7 @@ export function HomeView() {
             </span>
           </h1>
           <p className="mt-4 text-base md:text-lg text-muted-foreground max-w-xl">
-            Playbeat Digital brings you a premium live TV experience with hundreds of channels across news, sports, entertainment, and more — all in stunning quality with rock-solid stability.
+            Playbeat Digital brings you a premium live TV experience with thousands of channels across news, sports, movies, entertainment, and more — all in stunning quality with rock-solid stability.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button size="lg" onClick={() => setView('channels')} className="gap-2">
@@ -101,7 +158,84 @@ export function HomeView() {
               My Favorites
             </Button>
           </div>
+          {/* Quick stats */}
+          <div className="mt-8 flex flex-wrap gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+                <Tv className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="font-semibold">15,000+</div>
+                <div className="text-xs text-muted-foreground">Live channels</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+                <Zap className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="font-semibold">460+</div>
+                <div className="text-xs text-muted-foreground">Categories</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+                <Flame className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="font-semibold">HLS + TS</div>
+                <div className="text-xs text-muted-foreground">Auto-recovery</div>
+              </div>
+            </div>
+          </div>
         </div>
+      </section>
+
+      {/* Featured Channels (storefront) */}
+      <section className="mt-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Flame className="h-5 w-5 text-rose-400" />
+            <h2 className="text-xl md:text-2xl font-semibold">Featured Channels</h2>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => setView('channels')} className="gap-2">
+            View all <ArrowRight className="h-3 w-3" />
+          </Button>
+        </div>
+        {loadingFeatured ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-video rounded-xl" />
+            ))}
+          </div>
+        ) : featured.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Tv className="h-10 w-10 text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">
+                No featured channels yet. An admin needs to index the catalog first.
+              </p>
+              <Button className="mt-4 gap-2" onClick={() => setView('admin')}>
+                <Radio className="h-4 w-4" /> Go to Admin
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {featured.map((ch) => (
+              <ChannelTile
+                key={ch.streamId}
+                ch={ch}
+                onClick={() => openChannel({
+                  channelId: ch.streamId,
+                  channelName: ch.name,
+                  channelLogo: ch.logo || null,
+                  category: ch.category,
+                })}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Continue Watching */}
@@ -119,7 +253,7 @@ export function HomeView() {
               </Button>
             )}
           </div>
-          {loading ? (
+          {loadingHistory ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="aspect-video rounded-xl" />
@@ -188,7 +322,7 @@ export function HomeView() {
               <h3 className="font-semibold">Live Channels</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Browse hundreds of live channels organized by category. Search by name, tap to play, and switch instantly without distortion.
+              Browse thousands of live channels organized by category. Search by name, tap to play, and switch instantly without distortion.
             </p>
             <Button variant="link" className="px-0 mt-3 text-rose-400" onClick={() => setView('channels')}>
               Browse now <ArrowRight className="h-3 w-3 ml-1" />
