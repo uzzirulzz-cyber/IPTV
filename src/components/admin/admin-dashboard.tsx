@@ -908,6 +908,19 @@ function ZapierTab() {
     sentAt: string
   }>>([])
 
+  // Channel broadcast state
+  const [channelFormat, setChannelFormat] = useState('json')
+  const [channelLimit, setChannelLimit] = useState('500')
+  const [channelCategory, setChannelCategory] = useState('')
+  const [sendingChannels, setSendingChannels] = useState(false)
+  const [channelResult, setChannelResult] = useState<{
+    ok: boolean
+    channelsSent?: number
+    format?: string
+    response?: string
+    error?: string
+  } | null>(null)
+
   const loadConfig = async () => {
     try {
       const res = await fetch('/api/admin/zapier/config', { cache: 'no-store' })
@@ -993,6 +1006,42 @@ function ZapierTab() {
       toast.success('Log cleared')
     } catch {
       toast.error('Failed to clear log')
+    }
+  }
+
+  const handleBroadcastChannels = async () => {
+    setSendingChannels(true)
+    setChannelResult(null)
+    try {
+      const res = await fetch('/api/admin/zapier/broadcast-channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          format: channelFormat,
+          limit: parseInt(channelLimit, 10) || 500,
+          category: channelCategory || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Broadcast failed')
+      if (data.ok) {
+        setChannelResult({
+          ok: true,
+          channelsSent: data.channelsSent,
+          format: data.format,
+          response: data.response,
+        })
+        toast.success(`Sent ${data.channelsSent} channels to Zapier`)
+        loadLogs()
+      } else {
+        setChannelResult({ ok: false, error: data.error || 'Unknown error' })
+        toast.error('Broadcast failed')
+      }
+    } catch (err) {
+      setChannelResult({ ok: false, error: err instanceof Error ? err.message : 'Unknown error' })
+      toast.error(err instanceof Error ? err.message : 'Broadcast failed')
+    } finally {
+      setSendingChannels(false)
     }
   }
 
@@ -1084,6 +1133,89 @@ function ZapierTab() {
 }, null, 2)}
               </pre>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Broadcast Channel List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Tv className="h-5 w-5 text-rose-400" />
+            Broadcast Channel List to Zapier
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Sends the full channel broadcasting list to your Zapier webhook. The payload includes a
+              <code className="text-xs bg-muted px-1.5 py-0.5 rounded mx-1">raw_body</code> field containing
+              the channel data formatted for your Zapier Code step (which POSTs to the opplex.ch API).
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="zapier-format">Format</Label>
+                <select
+                  id="zapier-format"
+                  value={channelFormat}
+                  onChange={(e) => setChannelFormat(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="json">JSON (clean channel objects)</option>
+                  <option value="xtream">Xtream Codes (API format)</option>
+                  <option value="m3u">M3U Playlist</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="zapier-limit">Channel Limit</Label>
+                <Input
+                  id="zapier-limit"
+                  type="number"
+                  min="1"
+                  max="2000"
+                  value={channelLimit}
+                  onChange={(e) => setChannelLimit(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="zapier-category">Category Filter (optional)</Label>
+                <Input
+                  id="zapier-category"
+                  type="text"
+                  placeholder="e.g. United States"
+                  value={channelCategory}
+                  onChange={(e) => setChannelCategory(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button onClick={handleBroadcastChannels} disabled={sendingChannels || !isActive} className="gap-2">
+                {sendingChannels ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                {sendingChannels ? 'Sending…' : 'Broadcast Channel List'}
+              </Button>
+              {!isActive && (
+                <span className="text-xs text-muted-foreground">Enable the webhook above to send</span>
+              )}
+            </div>
+            {channelResult && (
+              <div className={`p-3 rounded-lg border ${channelResult.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-rose-500/30 bg-rose-500/5'}`}>
+                <p className={`text-sm font-medium ${channelResult.ok ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {channelResult.ok
+                    ? `✓ Sent ${channelResult.channelsSent} channels (${channelResult.format} format) to Zapier`
+                    : `✗ Failed: ${channelResult.error}`
+                  }
+                </p>
+                {channelResult.response && (
+                  <p className="text-xs text-muted-foreground mt-1 font-mono break-all">
+                    {channelResult.response.substring(0, 200)}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
